@@ -14,6 +14,11 @@ namespace KhuPhoManager.Models
         /// </summary>
         public int HouseNumber { get; set; }
 
+        /// <summary>
+        /// Gets or sets the address of the household
+        /// </summary>
+        public string Address { get; set; }
+
         private List<IPerson> _members = new List<IPerson>();
 
         /// <summary>
@@ -34,6 +39,15 @@ namespace KhuPhoManager.Models
         public Household(int houseNumber)
         {
             HouseNumber = houseNumber;
+        }
+
+        /// <summary>
+        /// Creates a new instance of the Household class with the specified house number and address
+        /// </summary>
+        public Household(int houseNumber, string address)
+        {
+            HouseNumber = houseNumber;
+            Address = address;
         }
 
         /// <summary>

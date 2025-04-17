@@ -1,1438 +1,1125 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using System.Linq;
-using System.Collections.Generic;
 using KhuPhoManager.Controllers;
 using KhuPhoManager.Models;
-using FontAwesome.Sharp;
 
 namespace KhuPhoManager.Views.Forms
 {
+    /// <summary>
+    /// Main form for the KhuPho Manager application with a modern, professional UI
+    /// </summary>
     public partial class MainForm : Form
     {
-        private GuiNeighborhoodController _controller;
+        // Controller
+        private readonly GuiNeighborhoodController _controller;
         
-        // Dashboard panels and controls
-        private Panel dashboardPanel;
-        private Panel sidebarPanel;
-        private Panel mainContentPanel;
+        // UI Colors
+        private readonly Color _primaryColor = Color.FromArgb(24, 90, 157);       // Dark blue
+        private readonly Color _secondaryColor = Color.FromArgb(17, 53, 71);      // Even darker blue
+        private readonly Color _highlightColor = Color.FromArgb(86, 204, 242);    // Light blue
+        private readonly Color _textColor = Color.FromArgb(238, 238, 238);        // Off-white
+        private readonly Color _panelColor = Color.FromArgb(247, 250, 252);       // Very light blue-gray
+        private readonly Color _accentColor = Color.FromArgb(255, 74, 130);       // Pink accent
+        
+        // UI Elements
+        private Panel sidePanel;
         private Panel headerPanel;
-        private Panel statisticsPanel;
-        private Panel householdListPanel;
-        private Panel actionPanel;
-        private ListView householdListView;
-        private System.Windows.Forms.Timer refreshTimer;
-        private StatusStrip statusStrip;
-        private ToolStripStatusLabel statusLabel;
-        
-        // Modern UI elements
-        private FlowLayoutPanel menuPanel;
-        private Label applicationTitle;
-        private IconButton dashboardButton;
-        private IconButton householdsButton;
-        private IconButton peopleButton;
-        private IconButton reportsButton;
-        private IconButton settingsButton;
-        private IconButton activeButton;
-        private Panel navIndicator;
+        private Panel mainPanel;
+        private Panel dashboardPanel;
+        private Panel householdsPanel;
+        private Panel peoplePanel;
+        private Panel reportsPanel;
+        private Panel settingsPanel;
         private Panel activePanel;
+        private Panel navIndicator;
         
-        // Theme colors
-        private readonly Color primaryColor = Color.FromArgb(24, 90, 157);       // Dark blue
-        private readonly Color secondaryColor = Color.FromArgb(17, 53, 71);      // Even darker blue
-        private readonly Color highlightColor = Color.FromArgb(86, 204, 242);    // Light blue
-        private readonly Color textColor = Color.FromArgb(238, 238, 238);        // Off-white
-        private readonly Color panelColor = Color.FromArgb(247, 250, 252);       // Very light blue-gray
-        private readonly Color accentColor = Color.FromArgb(255, 74, 130);       // Pink accent
-
+        // Navigation buttons
+        private List<Button> navigationButtons;
+        private Button activeButton;
+        private Button dashboardButton;
+        private Button householdsButton;
+        private Button peopleButton;
+        private Button reportsButton;
+        private Button settingsButton;
+        
+        // Dashboard controls
+        private Panel statisticsPanel;
+        private ListView householdListView;
+        private Label statusLabel;
+        private System.Windows.Forms.Timer refreshTimer;
+        
+        /// <summary>
+        /// Constructor for the MainForm
+        /// </summary>
+        /// <param name="controller">The neighborhood controller</param>
         public MainForm(GuiNeighborhoodController controller)
         {
             _controller = controller ?? throw new ArgumentNullException(nameof(controller));
+            
             InitializeComponent();
+            InitializeCustomComponents();
+            SetupEventHandlers();
+            
+            // Initial data load
+            RefreshDashboard();
         }
-
+        
+        /// <summary>
+        /// Set up event handlers for form controls
+        /// </summary>
+        private void SetupEventHandlers()
+        {
+            // Navigation button click events
+            dashboardButton.Click += (sender, e) => {
+                SetActiveButton(dashboardButton);
+                ShowPanel(dashboardPanel);
+                RefreshDashboard();
+            };
+            
+            householdsButton.Click += (sender, e) => {
+                SetActiveButton(householdsButton);
+                ShowPanel(householdsPanel);
+                RefreshDashboard();
+            };
+            
+            peopleButton.Click += (sender, e) => {
+                SetActiveButton(peopleButton);
+                ShowPanel(peoplePanel);
+            };
+            
+            reportsButton.Click += (sender, e) => {
+                SetActiveButton(reportsButton);
+                ShowPanel(reportsPanel);
+            };
+            
+            settingsButton.Click += (sender, e) => {
+                SetActiveButton(settingsButton);
+                ShowPanel(settingsPanel);
+            };
+            
+            // Set up refresh timer
+            refreshTimer.Tick += (sender, e) => {
+                if (activePanel == dashboardPanel || activePanel == householdsPanel)
+                {
+                    RefreshDashboard();
+                }
+            };
+            
+            // Form resize event
+            this.Resize += (sender, e) => {
+                RefreshStatistics();
+            };
+        }
+        
+        /// <summary>
+        /// Sets the active navigation button with visual indicator
+        /// </summary>
+        private void SetActiveButton(Button button)
+        {
+            if (activeButton != null)
+            {
+                // Reset previous active button
+                activeButton.BackColor = _secondaryColor;
+                activeButton.ForeColor = _textColor;
+            }
+            
+            // Set new active button
+            activeButton = button;
+            activeButton.BackColor = _primaryColor;
+            activeButton.ForeColor = _highlightColor;
+            
+            // Position navigation indicator
+            navIndicator.Height = button.Height;
+            navIndicator.Top = button.Top;
+            navIndicator.Left = 0;
+            navIndicator.Visible = true;
+        }
+        
+        /// <summary>
+        /// Shows the specified panel and hides all others
+        /// </summary>
+        private void ShowPanel(Panel panel)
+        {
+            // Hide all panels
+            dashboardPanel.Visible = false;
+            peoplePanel.Visible = false;
+            reportsPanel.Visible = false;
+            settingsPanel.Visible = false;
+            
+            // Show the selected panel
+            panel.Visible = true;
+            activePanel = panel;
+            
+            // Update status label
+            UpdateStatusLabel();
+        }
+        
+        /// <summary>
+        /// Updates the status label with current information
+        /// </summary>
+        private void UpdateStatusLabel()
+        {
+            string panelName = "Unknown";
+            
+            if (activePanel == dashboardPanel || activePanel == householdsPanel)
+                panelName = "Dashboard";
+            else if (activePanel == peoplePanel)
+                panelName = "People Management";
+            else if (activePanel == reportsPanel)
+                panelName = "Reports";
+            else if (activePanel == settingsPanel)
+                panelName = "Settings";
+                
+            statusLabel.Text = $"{panelName} | Households: {_controller.GetHouseholdCount()} | Population: {_controller.GetTotalPopulation()}";
+        }
+        
+        /// <summary>
+        /// Initialize the form components
+        /// </summary>
         private void InitializeComponent()
         {
             this.SuspendLayout();
             
-            // MainForm - Set up the main form
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
-            this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1280, 800);
-            this.Name = "MainForm";
+            // Form settings
             this.Text = "Neighborhood Manager";
-            this.Load += new System.EventHandler(this.MainForm_Load);
-            this.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
-            this.MinimumSize = new Size(1280, 800);
+            this.Size = new Size(1200, 800);
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.MinimumSize = new Size(1000, 700);
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = true;
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Color.White;
+            this.MinimizeBox = true;
+            this.BackColor = _panelColor;
             
-            // Create the main layout structure
-            // 1. Sidebar panel for navigation
-            sidebarPanel = new Panel
+            // Try to load icon if available
+            try
             {
-                Width = 250,
-                Dock = DockStyle.Left,
-                BackColor = secondaryColor,
-                Padding = new Padding(0, 20, 0, 0)
+                this.Icon = new Icon(GetType(), "house.ico");
+            }
+            catch
+            {
+                // Icon not found, continue without it
+            }
+            
+            this.ResumeLayout(false);
+        }
+        
+        /// <summary>
+        /// Initialize custom UI components
+        /// </summary>
+        private void InitializeCustomComponents()
+        {
+            // Initialize main panels
+            InitializeMainLayout();
+            
+            // Initialize navigation
+            InitializeNavigation();
+            
+            // Initialize content panels
+            InitializeDashboardPanel();
+            InitializeHouseholdsPanel();
+            InitializePeoplePanel();
+            InitializeReportsPanel();
+            InitializeSettingsPanel();
+            
+            // Set up refresh timer
+            refreshTimer = new System.Windows.Forms.Timer
+            {
+                Interval = 30000, // 30 seconds
+                Enabled = true
             };
             
-            // 2. Main content area
-            mainContentPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = panelColor,
-                Padding = new Padding(20)
-            };
-            
-            // App title in sidebar
-            applicationTitle = new Label
-            {
-                Text = "Neighborhood Manager",
-                ForeColor = textColor,
-                Font = new Font("Segoe UI Semibold", 14, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleCenter,
-                Dock = DockStyle.Top,
-                Height = 80,
-                Padding = new Padding(0, 20, 0, 20)
-            };
-            
-            // Navigation indicator panel
-            navIndicator = new Panel
-            {
-                Width = 4,
-                Height = 45,
-                BackColor = highlightColor,
-                Location = new Point(0, 0),
-                Visible = false
-            };
-            
-            // Create menu panel for sidebar navigation
-            menuPanel = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.TopDown,
-                WrapContents = false,
-                Padding = new Padding(10, 30, 10, 0),
-                AutoScroll = true
-            };
-            
-            // Create navigation buttons
-            dashboardButton = CreateMenuButton("Dashboard", IconChar.ChartPie);
-            householdsButton = CreateMenuButton("Households", IconChar.HouseChimney);
-            peopleButton = CreateMenuButton("People", IconChar.UserGroup);
-            reportsButton = CreateMenuButton("Reports", IconChar.FileAlt);
-            settingsButton = CreateMenuButton("Settings", IconChar.Gear);
-            
-            // Add click handlers to menu buttons
-            dashboardButton.Click += (s, e) => ActivateButton(s as IconButton, "Dashboard");
-            householdsButton.Click += (s, e) => ActivateButton(s as IconButton, "Households");
-            peopleButton.Click += (s, e) => ActivateButton(s as IconButton, "People");
-            reportsButton.Click += (s, e) => ActivateButton(s as IconButton, "Reports");
-            settingsButton.Click += (s, e) => ActivateButton(s as IconButton, "Settings");
-            
-            // Add buttons to the menu panel
-            menuPanel.Controls.Add(dashboardButton);
-            menuPanel.Controls.Add(householdsButton);
-            menuPanel.Controls.Add(peopleButton);
-            menuPanel.Controls.Add(reportsButton);
-            menuPanel.Controls.Add(settingsButton);
-            
-            // Add components to the sidebar
-            sidebarPanel.Controls.Add(menuPanel);
-            sidebarPanel.Controls.Add(applicationTitle);
-            sidebarPanel.Controls.Add(navIndicator);
-            
-            // Create the header panel for the main content area
+            // Set initial active panel
+            SetActiveButton(dashboardButton);
+            ShowPanel(dashboardPanel);
+        }
+        
+        /// <summary>
+        /// Initialize the main layout panels
+        /// </summary>
+        private void InitializeMainLayout()
+        {
+            // Header panel
             headerPanel = new Panel
             {
                 Dock = DockStyle.Top,
                 Height = 60,
-                BackColor = Color.White,
-                Padding = new Padding(20, 0, 0, 0)
+                BackColor = _primaryColor
             };
             
-            // Add a shadow to the header
-            headerPanel.Paint += (sender, e) => {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                Rectangle rect = new Rectangle(0, headerPanel.Height - 2, headerPanel.Width, 2);
-                using (LinearGradientBrush brush = new LinearGradientBrush(
-                    new Point(0, rect.Y), new Point(0, rect.Bottom),
-                    Color.FromArgb(40, 0, 0, 0), Color.Transparent))
-                {
-                    e.Graphics.FillRectangle(brush, rect);
-                }
-            };
-            
-            // Create a title for the current section in the header
-            Label headerTitle = new Label
+            // Add app title to header
+            Label titleLabel = new Label
             {
-                Text = "Dashboard",
-                Font = new Font("Segoe UI Semibold", 16, FontStyle.Bold),
-                ForeColor = primaryColor,
-                TextAlign = ContentAlignment.MiddleLeft,
+                Text = "Neighborhood Manager",
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                ForeColor = _textColor,
                 AutoSize = true,
                 Location = new Point(20, 15)
             };
             
-            // Add a refresh button to the header
-            IconButton refreshButton = new IconButton
+            // Status label in header
+            statusLabel = new Label
             {
-                IconChar = IconChar.SyncAlt,
-                IconColor = primaryColor,
-                IconSize = 18,
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(40, 40),
-                Location = new Point(headerPanel.Width - 60, 10),
-                Anchor = AnchorStyles.Right | AnchorStyles.Top,
-                Text = ""
+                Text = "Ready",
+                Font = new Font("Segoe UI", 9),
+                ForeColor = _textColor,
+                AutoSize = true,
+                Location = new Point(this.Width - 150, 20),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
-            refreshButton.FlatAppearance.BorderSize = 0;
-            refreshButton.Click += RefreshDashboard;
             
-            headerPanel.Controls.Add(headerTitle);
-            headerPanel.Controls.Add(refreshButton);
+            headerPanel.Controls.Add(titleLabel);
+            headerPanel.Controls.Add(statusLabel);
             
-            // Initialize main content panels for each section
-            InitializeDashboardPanel();
-            InitializeHouseholdsPanel();
+            // Side panel for navigation
+            sidePanel = new Panel
+            {
+                Dock = DockStyle.Left,
+                Width = 220,
+                BackColor = _secondaryColor
+            };
             
-            // Add the main structural panels to the form
-            mainContentPanel.Controls.Add(dashboardPanel);
-            mainContentPanel.Controls.Add(householdListPanel);
-            mainContentPanel.Controls.Add(headerPanel);
+            // Main content panel
+            mainPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = _panelColor,
+                Padding = new Padding(15)
+            };
             
-            this.Controls.Add(mainContentPanel);
-            this.Controls.Add(sidebarPanel);
+            // Add panels to form
+            this.Controls.Add(mainPanel);
+            this.Controls.Add(sidePanel);
+            this.Controls.Add(headerPanel);
+        }
+        
+        /// <summary>
+        /// Initialize the navigation sidebar
+        /// </summary>
+        private void InitializeNavigation()
+        {
+            // Logo panel at the top of sidebar
+            Panel logoPanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 100,
+                BackColor = _secondaryColor
+            };
             
-            // Create status strip
-            statusStrip = new StatusStrip();
-            statusStrip.BackColor = secondaryColor;
-            statusStrip.ForeColor = textColor;
-            statusLabel = new ToolStripStatusLabel("Ready");
-            statusLabel.ForeColor = textColor;
-            statusStrip.Items.Add(statusLabel);
-            this.Controls.Add(statusStrip);
+            // App logo label
+            Label logoLabel = new Label
+            {
+                Text = "KhuPho",
+                Font = new Font("Segoe UI", 20, FontStyle.Bold),
+                ForeColor = _highlightColor,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Dock = DockStyle.Fill
+            };
             
-            // Activate Dashboard by default
-            ActivateButton(dashboardButton, "Dashboard");
+            logoPanel.Controls.Add(logoLabel);
+            sidePanel.Controls.Add(logoPanel);
             
-            // Create main dashboard panel
+            // Navigation indicator panel
+            navIndicator = new Panel
+            {
+                BackColor = _highlightColor,
+                Size = new Size(7, 45),
+                Location = new Point(0, 0),
+                Visible = false
+            };
+            
+            sidePanel.Controls.Add(navIndicator);
+            
+            // Navigation buttons
+            navigationButtons = new List<Button>();
+            
+            dashboardButton = CreateNavButton("Dashboard", "", 0);
+            householdsButton = CreateNavButton("Households", "", 1);
+            peopleButton = CreateNavButton("People", "", 2);
+            reportsButton = CreateNavButton("Reports", "", 3);
+            settingsButton = CreateNavButton("Settings", "", 4);
+            
+            // Add buttons to side panel
+            sidePanel.Controls.Add(dashboardButton);
+            sidePanel.Controls.Add(householdsButton);
+            sidePanel.Controls.Add(peopleButton);
+            sidePanel.Controls.Add(reportsButton);
+            sidePanel.Controls.Add(settingsButton);
+        }
+        
+        /// <summary>
+        /// Initialize the dashboard panel
+        /// </summary>
+        private void InitializeDashboardPanel()
+        {
             dashboardPanel = new Panel
             {
                 Dock = DockStyle.Fill,
-                Padding = new Padding(10),
-                BackColor = Color.FromArgb(240, 240, 250)
+                BackColor = _panelColor,
+                Visible = false
             };
             
-            // Create top statistics panel
+            // Dashboard title
+            Label dashboardTitle = new Label
+            {
+                Text = "Dashboard",
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                ForeColor = _primaryColor,
+                Dock = DockStyle.Top,
+                Height = 40,
+                Padding = new Padding(0, 5, 0, 0)
+            };
+            
+            // Statistics panel
             statisticsPanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 150,
-                BackColor = Color.White,
-                Margin = new Padding(0, 0, 0, 10),
-                Padding = new Padding(10),
-                BorderStyle = BorderStyle.None
+                Height = 120,
+                Padding = new Padding(0, 10, 0, 10)
             };
             
-            // Add round corners and shadow effect to statistics panel
-            statisticsPanel.Paint += (sender, e) => {
-                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                e.Graphics.Clear(statisticsPanel.Parent.BackColor);
-                using (var path = new System.Drawing.Drawing2D.GraphicsPath())
-                {
-                    int radius = 10;
-                    path.AddArc(0, 0, radius, radius, 180, 90);
-                    path.AddArc(statisticsPanel.Width - radius - 1, 0, radius, radius, 270, 90);
-                    path.AddArc(statisticsPanel.Width - radius - 1, statisticsPanel.Height - radius - 1, radius, radius, 0, 90);
-                    path.AddArc(0, statisticsPanel.Height - radius - 1, radius, radius, 90, 90);
-                    path.CloseAllFigures();
-                    e.Graphics.FillPath(new SolidBrush(Color.White), path);
-                    // Add a slight drop shadow effect
-                    e.Graphics.DrawPath(new Pen(Color.FromArgb(40, 0, 0, 0), 2), path);
-                }
-            };
-            
-            // Create household list panel (occupies the left side of the main area)
-            householdListPanel = new Panel
-            {
-                Dock = DockStyle.Left,
-                Width = 500,
-                BackColor = Color.White,
-                Margin = new Padding(0, 10, 10, 0),
-                Padding = new Padding(10),
-                BorderStyle = BorderStyle.None
-            };
-            
-            // Add round corners and shadow effect to household list panel
-            householdListPanel.Paint += (sender, e) => {
-                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                e.Graphics.Clear(householdListPanel.Parent.BackColor);
-                using (var path = new System.Drawing.Drawing2D.GraphicsPath())
-                {
-                    int radius = 10;
-                    path.AddArc(0, 0, radius, radius, 180, 90);
-                    path.AddArc(householdListPanel.Width - radius - 1, 0, radius, radius, 270, 90);
-                    path.AddArc(householdListPanel.Width - radius - 1, householdListPanel.Height - radius - 1, radius, radius, 0, 90);
-                    path.AddArc(0, householdListPanel.Height - radius - 1, radius, radius, 90, 90);
-                    path.CloseAllFigures();
-                    e.Graphics.FillPath(new SolidBrush(Color.White), path);
-                    // Add a slight drop shadow effect
-                    e.Graphics.DrawPath(new Pen(Color.FromArgb(40, 0, 0, 0), 2), path);
-                }
-            };
-            
-            // Create action panel (right side of the main area)
-            actionPanel = new Panel
+            // Household list panel
+            Panel householdListPanel = new Panel
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.White,
-                Margin = new Padding(10, 10, 0, 0),
-                Padding = new Padding(10),
-                BorderStyle = BorderStyle.None
+                Padding = new Padding(0, 10, 0, 0)
             };
             
-            // Add round corners and shadow effect to action panel
-            actionPanel.Paint += (sender, e) => {
-                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                e.Graphics.Clear(actionPanel.Parent.BackColor);
-                using (var path = new System.Drawing.Drawing2D.GraphicsPath())
-                {
-                    int radius = 10;
-                    path.AddArc(0, 0, radius, radius, 180, 90);
-                    path.AddArc(actionPanel.Width - radius - 1, 0, radius, radius, 270, 90);
-                    path.AddArc(actionPanel.Width - radius - 1, actionPanel.Height - radius - 1, radius, radius, 0, 90);
-                    path.AddArc(0, actionPanel.Height - radius - 1, radius, radius, 90, 90);
-                    path.CloseAllFigures();
-                    e.Graphics.FillPath(new SolidBrush(Color.White), path);
-                    // Add a slight drop shadow effect
-                    e.Graphics.DrawPath(new Pen(Color.FromArgb(40, 0, 0, 0), 2), path);
-                }
+            // Household list title
+            Label householdListTitle = new Label
+            {
+                Text = "Households",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = _primaryColor,
+                Dock = DockStyle.Top,
+                Height = 30
             };
             
-            // Create household list view
+            // Household ListView
             householdListView = new ListView
             {
                 Dock = DockStyle.Fill,
                 View = View.Details,
                 FullRowSelect = true,
                 GridLines = false,
-                HeaderStyle = ColumnHeaderStyle.Nonclickable,
-                BorderStyle = BorderStyle.None,
-                BackColor = Color.White
+                BorderStyle = BorderStyle.FixedSingle,
+                Font = new Font("Segoe UI", 9)
             };
             
-            // Configure household list view columns
+            // Add columns to the ListView
             householdListView.Columns.Add("House #", 80);
-            householdListView.Columns.Add("Members", 80);
+            householdListView.Columns.Add("Address", 250);
             householdListView.Columns.Add("Adults", 80);
             householdListView.Columns.Add("Children", 80);
+            householdListView.Columns.Add("Total", 80);
             
-            // Add household list view to household list panel
-            Label householdsHeader = new Label
-            {
-                Text = "Households",
-                Dock = DockStyle.Top,
-                Font = new Font("Segoe UI", 12, FontStyle.Bold),
-                Height = 30,
-                TextAlign = ContentAlignment.MiddleLeft,
-                ForeColor = Color.FromArgb(40, 40, 100)
-            };
-            
-            Panel householdActionsPanel = new Panel
+            // Action buttons panel
+            Panel actionButtonsPanel = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 50
-            };
-            
-            Button addHouseholdButton = new Button
-            {
-                Text = "Add Household",
-                BackColor = Color.FromArgb(30, 30, 65),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Width = 150,
-                Height = 40,
-                Location = new Point(0, 5)
-            };
-            addHouseholdButton.FlatAppearance.BorderSize = 0;
-            addHouseholdButton.Click += AddHousehold_Click;
-            
-            Button viewDetailsButton = new Button
-            {
-                Text = "View Details",
-                BackColor = Color.FromArgb(60, 60, 100),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Width = 150,
-                Height = 40,
-                Location = new Point(160, 5)
-            };
-            viewDetailsButton.FlatAppearance.BorderSize = 0;
-            viewDetailsButton.Click += ViewHouseholdDetails_Click;
-            
-            householdActionsPanel.Controls.Add(addHouseholdButton);
-            householdActionsPanel.Controls.Add(viewDetailsButton);
-            
-            // Configure action panel
-            Label actionHeader = new Label
-            {
-                Text = "Quick Actions",
-                Dock = DockStyle.Top,
-                Font = new Font("Segoe UI", 12, FontStyle.Bold),
-                Height = 30,
-                TextAlign = ContentAlignment.MiddleLeft,
-                ForeColor = Color.FromArgb(40, 40, 100)
-            };
-            
-            FlowLayoutPanel actionButtonsPanel = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.TopDown,
-                WrapContents = false,
-                AutoScroll = true,
+                Height = 50,
                 Padding = new Padding(0, 10, 0, 0)
             };
             
-            // Create action buttons
-            string[] actionLabels = new[] {
-                "Add Person", "Find Person", 
-                "View Statistics", "View Household Rankings", 
-                "Sort by Age", "Save Data", "Load Data"
-            };
-            
-            EventHandler[] actionHandlers = new EventHandler[] {
-                AddPerson_Click, FindPerson_Click,
-                Statistics_Click, MostFewestMembers_Click,
-                SortByAge_Click, SaveFile_Click, OpenFile_Click
-            };
-            
-            for (int i = 0; i < actionLabels.Length; i++)
+            // Add household button
+            Button addHouseholdButton = new Button
             {
-                Button actionButton = new Button
-                {
-                    Text = actionLabels[i],
-                    BackColor = Color.FromArgb(230, 230, 250),
-                    ForeColor = Color.FromArgb(30, 30, 65),
-                    FlatStyle = FlatStyle.Flat,
-                    Width = 300,
-                    Height = 50,
-                    Margin = new Padding(0, 0, 0, 10),
-                    Font = new Font("Segoe UI", 10, FontStyle.Regular),
-                    TextAlign = ContentAlignment.MiddleLeft,
-                    ImageAlign = ContentAlignment.MiddleRight
-                };
-                actionButton.FlatAppearance.BorderSize = 0;
-                actionButton.Click += actionHandlers[i];
-                actionButtonsPanel.Controls.Add(actionButton);
-            }
-            
-            // Assemble the panels
-            householdListPanel.Controls.Add(householdListView);
-            householdListPanel.Controls.Add(householdActionsPanel);
-            householdListPanel.Controls.Add(householdsHeader);
-            
-            actionPanel.Controls.Add(actionButtonsPanel);
-            actionPanel.Controls.Add(actionHeader);
-            
-            dashboardPanel.Controls.Add(actionPanel);
-            dashboardPanel.Controls.Add(householdListPanel);
-            dashboardPanel.Controls.Add(statisticsPanel);
-            
-            this.Controls.Add(dashboardPanel);
-            
-            // Create refresh timer
-            refreshTimer = new System.Windows.Forms.Timer
-            {
-                Interval = 30000 // Refresh every 30 seconds
-            };
-            refreshTimer.Tick += (s, e) => RefreshDashboard(s, e);
-            refreshTimer.Start();
-            
-            this.ResumeLayout(false);
-        }
-        
-        private void MainForm_Load(object sender, EventArgs e)
-        {
-            statusLabel.Text = "Loading neighborhood data...";
-            
-            try
-            {
-                // Initialize all panels if needed
-                if (dashboardPanel == null) InitializeDashboardPanel();
-                if (householdListPanel == null) InitializeHouseholdsPanel();
-                if (actionPanel == null) InitializePeoplePanel();
-                
-                // Make sure all panels are added to the main content area
-                if (!mainContentPanel.Controls.Contains(dashboardPanel))
-                    mainContentPanel.Controls.Add(dashboardPanel);
-                if (!mainContentPanel.Controls.Contains(householdListPanel))
-                    mainContentPanel.Controls.Add(householdListPanel);
-                if (!mainContentPanel.Controls.Contains(actionPanel))
-                    mainContentPanel.Controls.Add(actionPanel);
-                    
-                // Create refresh timer if not already created
-                if (refreshTimer == null)
-                {
-                    refreshTimer = new System.Windows.Forms.Timer();
-                    refreshTimer.Interval = 60000; // Refresh every minute
-                    refreshTimer.Tick += RefreshDashboard;
-                    refreshTimer.Start();
-                }
-                
-                // Set the dashboard as the active panel by default
-                ActivateButton(dashboardButton, "Dashboard");
-                
-                // Update status
-                statusLabel.Text = "Ready";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error initializing application: {ex.Message}", "Error", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                statusLabel.Text = $"Error: {ex.Message}";
-            }
-        }
-        
-        private void OpenFile_Click(object sender, EventArgs e)
-        {
-            using (OpenFileDialog openFileDialog = new OpenFileDialog())
-            {
-                openFileDialog.Filter = "CSV Files (*.csv)|*.csv|Text Files (*.txt)|*.txt|All Files (*.*)|*.*";
-                openFileDialog.Title = "Open Neighborhood Data File";
-                
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    try
-                    {
-                        // Show the read file form
-                        ReadFileForm readFileForm = new ReadFileForm(_controller, openFileDialog.FileName);
-                        readFileForm.ShowDialog();
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Error opening file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-            }
-        }
-        
-        private void SaveFile_Click(object sender, EventArgs e)
-        {
-            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
-            {
-                saveFileDialog.Filter = "CSV Files (*.csv)|*.csv|Text Files (*.txt)|*.txt|All Files (*.*)|*.*";
-                saveFileDialog.Title = "Save Neighborhood Data File";
-                saveFileDialog.DefaultExt = "csv";
-                
-                if (saveFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    try
-                    {
-                        // Show the save file form
-                        SaveFileForm saveFileForm = new SaveFileForm(_controller, saveFileDialog.FileName);
-                        saveFileForm.ShowDialog();
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Error saving file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-            }
-        }
-        
-        private void ListHouseholds_Click(object sender, EventArgs e)
-        {
-            HouseholdListForm householdListForm = new HouseholdListForm(_controller);
-            householdListForm.ShowDialog();
-        }
-        
-        private void AddHousehold_Click(object sender, EventArgs e)
-        {
-            AddHouseholdForm addHouseholdForm = new AddHouseholdForm(_controller);
-            addHouseholdForm.ShowDialog();
-        }
-
-        private void RemoveHousehold_Click(object sender, EventArgs e)
-        {
-            RemoveHouseholdForm removeHouseholdForm = new RemoveHouseholdForm(_controller);
-            removeHouseholdForm.ShowDialog();
-        }
-        
-        private void FindPerson_Click(object sender, EventArgs e)
-        {
-            FindPersonForm findPersonForm = new FindPersonForm(_controller);
-            findPersonForm.ShowDialog();
-        }
-        
-        private void AddPerson_Click(object sender, EventArgs e)
-        {
-            // Get list of households
-            var households = _controller.GetHouseholds();
-            if (households.Count == 0)
-            {
-                MessageBox.Show("There are no households to add a person to. Please create a household first.", 
-                               "No Households", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            // Create a form to select a household
-            using (var selectForm = new Form())
-            {
-                selectForm.Text = "Select Household";
-                selectForm.Size = new Size(400, 200);
-                selectForm.StartPosition = FormStartPosition.CenterParent;
-                selectForm.FormBorderStyle = FormBorderStyle.FixedDialog;
-                selectForm.MaximizeBox = false;
-                selectForm.MinimizeBox = false;
-
-                var label = new Label
-                {
-                    Text = "Select a household to add a person to:",
-                    Location = new Point(20, 20),
-                    AutoSize = true
-                };
-                
-                var combo = new ComboBox
-                {
-                    Location = new Point(20, 50),
-                    Width = 350,
-                    DropDownStyle = ComboBoxStyle.DropDownList
-                };
-
-                // Add households to the dropdown
-                foreach (var household in households)
-                {
-                    combo.Items.Add(new HouseholdItem(household.HouseNumber, 
-                        $"Household #{household.HouseNumber} ({household.Members.Count} members)"));
-                };
-                combo.SelectedIndex = 0;
-
-                var okButton = new Button
-                {
-                    Text = "OK",
-                    DialogResult = DialogResult.OK,
-                    Location = new Point(100, 100),
-                    Width = 100
-                };
-
-                var cancelButton = new Button
-                {
-                    Text = "Cancel",
-                    DialogResult = DialogResult.Cancel,
-                    Location = new Point(210, 100),
-                    Width = 100
-                };
-
-                selectForm.Controls.Add(label);
-                selectForm.Controls.Add(combo);
-                selectForm.Controls.Add(okButton);
-                selectForm.Controls.Add(cancelButton);
-                selectForm.AcceptButton = okButton;
-                selectForm.CancelButton = cancelButton;
-
-                if (selectForm.ShowDialog() == DialogResult.OK)
-                {
-                    var selectedItem = combo.SelectedItem as HouseholdItem;
-                    if (selectedItem != null)
-                    {
-                        // Open the add person form with the selected household number
-                        AddPersonToHouseholdForm addPersonForm = new AddPersonToHouseholdForm(_controller, selectedItem.HouseNumber);
-                        addPersonForm.ShowDialog();
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Helper class to store household information in combobox items
-        /// </summary>
-        internal class HouseholdItem
-        {
-            public int HouseNumber { get; }
-            private string DisplayText { get; }
-            
-            public HouseholdItem(int houseNumber, string displayText)
-            {
-                HouseNumber = houseNumber;
-                DisplayText = displayText;
-            }
-            
-            public override string ToString()
-            {
-                return DisplayText;
-            }
-        }
-        
-        /// <summary>
-        /// Creates a navigation menu button for the sidebar
-        /// </summary>
-        private IconButton CreateMenuButton(string text, IconChar icon)
-        {
-            var button = new IconButton
-            {
-                Text = text,
-                IconChar = icon,
+                Text = "Add Household",
+                BackColor = _primaryColor,
+                ForeColor = _textColor,
                 FlatStyle = FlatStyle.Flat,
-                ForeColor = textColor,
-                IconColor = textColor,
-                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
-                IconSize = 24,
-                ImageAlign = ContentAlignment.MiddleLeft,
-                TextAlign = ContentAlignment.MiddleLeft,
-                TextImageRelation = TextImageRelation.ImageBeforeText,
-                Padding = new Padding(10, 0, 0, 0),
-                Margin = new Padding(5, 5, 5, 5),
-                Size = new Size(230, 45),
+                Size = new Size(120, 30),
+                Location = new Point(0, 10),
+                Font = new Font("Segoe UI", 9),
                 Cursor = Cursors.Hand
             };
+            addHouseholdButton.FlatAppearance.BorderSize = 0;
             
+            // Remove household button
+            Button removeHouseholdButton = new Button
+            {
+                Text = "Remove Household",
+                BackColor = Color.FromArgb(220, 53, 69),
+                ForeColor = _textColor,
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(120, 30),
+                Location = new Point(130, 10),
+                Font = new Font("Segoe UI", 9),
+                Cursor = Cursors.Hand
+            };
+            removeHouseholdButton.FlatAppearance.BorderSize = 0;
+            
+            // View details button
+            Button viewDetailsButton = new Button
+            {
+                Text = "View Details",
+                BackColor = _highlightColor,
+                ForeColor = _secondaryColor,
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(120, 30),
+                Location = new Point(260, 10),
+                Font = new Font("Segoe UI", 9),
+                Cursor = Cursors.Hand
+            };
+            viewDetailsButton.FlatAppearance.BorderSize = 0;
+            
+            // Add buttons to action panel
+            actionButtonsPanel.Controls.Add(addHouseholdButton);
+            actionButtonsPanel.Controls.Add(removeHouseholdButton);
+            actionButtonsPanel.Controls.Add(viewDetailsButton);
+            
+            // Add controls to household list panel
+            householdListPanel.Controls.Add(householdListView);
+            householdListPanel.Controls.Add(actionButtonsPanel);
+            householdListPanel.Controls.Add(householdListTitle);
+            
+            // Add controls to dashboard panel
+            dashboardPanel.Controls.Add(householdListPanel);
+            dashboardPanel.Controls.Add(statisticsPanel);
+            dashboardPanel.Controls.Add(dashboardTitle);
+            
+            // Add dashboard panel to main panel
+            mainPanel.Controls.Add(dashboardPanel);
+            
+            // Set up event handlers
+            addHouseholdButton.Click += (sender, e) => {
+                AddHouseholdForm addHouseholdForm = new AddHouseholdForm(_controller);
+                addHouseholdForm.ShowDialog();
+                RefreshDashboard();
+            };
+            
+            removeHouseholdButton.Click += (sender, e) => {
+                RemoveHouseholdForm removeHouseholdForm = new RemoveHouseholdForm(_controller);
+                removeHouseholdForm.ShowDialog();
+                RefreshDashboard();
+            };
+            
+            viewDetailsButton.Click += (sender, e) => {
+                if (householdListView.SelectedItems.Count > 0)
+                {
+                    int houseNumber = int.Parse(householdListView.SelectedItems[0].Text);
+                    var household = _controller.GetHouseholds().FirstOrDefault(h => h.HouseNumber == houseNumber);
+                    
+                    if (household != null)
+                    {
+                        HouseholdDetailsForm detailsForm = new HouseholdDetailsForm(_controller, household);
+                        detailsForm.ShowDialog();
+                        RefreshDashboard();
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Please select a household first.", "No Selection", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            };
+            
+            householdListView.DoubleClick += (sender, e) => {
+                viewDetailsButton.PerformClick();
+            };
+        }
+        
+        /// <summary>
+        /// Initialize the households panel
+        /// </summary>
+        private void InitializeHouseholdsPanel()
+        {
+            // We're using the dashboard panel for households as well
+            // This method is here for consistency and future expansion
+            householdsPanel = dashboardPanel;
+        }
+        
+        /// <summary>
+        /// Initialize the people management panel
+        /// </summary>
+        private void InitializePeoplePanel()
+        {
+            peoplePanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = _panelColor,
+                Visible = false
+            };
+            
+            // People panel title
+            Label peopleTitle = new Label
+            {
+                Text = "People Management",
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                ForeColor = _primaryColor,
+                Dock = DockStyle.Top,
+                Height = 40,
+                Padding = new Padding(0, 5, 0, 0)
+            };
+            
+            // Create a flow layout panel for action cards
+            FlowLayoutPanel actionCardsPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                AutoScroll = true,
+                Padding = new Padding(0, 20, 0, 0)
+            };
+            
+            // Add action cards
+            Panel addPersonCard = CreateActionCard(
+                "Add Person", 
+                "Add a new person to a household", 
+                "",
+                (sender, e) => {
+                    // Show dialog to select a household first
+                    using (Form promptForm = new Form())
+                    {
+                        promptForm.Width = 350;
+                        promptForm.Height = 180;
+                        promptForm.Text = "Select Household";
+                        promptForm.StartPosition = FormStartPosition.CenterParent;
+                        promptForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+                        promptForm.MaximizeBox = false;
+                        promptForm.MinimizeBox = false;
+                        
+                        Label promptLabel = new Label() { Left = 20, Top = 20, Width = 310, Text = "Enter the house number to add a person to:" };
+                        NumericUpDown houseNumberInput = new NumericUpDown() { Left = 20, Top = 50, Width = 310, Minimum = 1, Maximum = 9999 };
+                        Button okButton = new Button() { Text = "OK", Left = 155, Width = 80, Top = 90, DialogResult = DialogResult.OK };
+                        Button cancelButton = new Button() { Text = "Cancel", Left = 250, Width = 80, Top = 90, DialogResult = DialogResult.Cancel };
+                        
+                        promptForm.Controls.Add(promptLabel);
+                        promptForm.Controls.Add(houseNumberInput);
+                        promptForm.Controls.Add(okButton);
+                        promptForm.Controls.Add(cancelButton);
+                        promptForm.AcceptButton = okButton;
+                        promptForm.CancelButton = cancelButton;
+                        
+                        if (promptForm.ShowDialog() == DialogResult.OK)
+                        {
+                            int houseNumber = (int)houseNumberInput.Value;
+                            
+
+                            // Check if the household exists
+                            var household = _controller.GetHouseholds().FirstOrDefault(h => h.HouseNumber == houseNumber);
+                            if (household != null)
+                            {
+                                AddPersonToHouseholdForm addPersonForm = new AddPersonToHouseholdForm(_controller, houseNumber);
+                                addPersonForm.ShowDialog();
+                                RefreshDashboard();
+                            }
+                            else
+                            {
+                                MessageBox.Show($"Household #{houseNumber} does not exist.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+                    }
+                });
+                
+            Panel findPersonCard = CreateActionCard(
+                "Find Person", 
+                "Search for a person by ID or name", 
+                "",
+                (sender, e) => {
+                    FindPersonForm findPersonForm = new FindPersonForm(_controller);
+                    findPersonForm.ShowDialog();
+                });
+                
+            Panel sortByAgeCard = CreateActionCard(
+                "Sort By Age", 
+                "View people sorted by their age", 
+                "",
+                (sender, e) => {
+                    SortByAgeForm sortByAgeForm = new SortByAgeForm(_controller);
+                    sortByAgeForm.ShowDialog();
+                });
+            
+            // Add cards to the flow panel
+            actionCardsPanel.Controls.Add(addPersonCard);
+            actionCardsPanel.Controls.Add(findPersonCard);
+            actionCardsPanel.Controls.Add(sortByAgeCard);
+            
+            // Add controls to the people panel
+            peoplePanel.Controls.Add(actionCardsPanel);
+            peoplePanel.Controls.Add(peopleTitle);
+            
+            // Add people panel to main panel
+            mainPanel.Controls.Add(peoplePanel);
+        }
+        
+        /// <summary>
+        /// Initialize the reports panel
+        /// </summary>
+        private void InitializeReportsPanel()
+        {
+            reportsPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = _panelColor,
+                Visible = false
+            };
+            
+            // Reports panel title
+            Label reportsTitle = new Label
+            {
+                Text = "Reports & Statistics",
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                ForeColor = _primaryColor,
+                Dock = DockStyle.Top,
+                Height = 40,
+                Padding = new Padding(0, 5, 0, 0)
+            };
+            
+            // Create a flow layout panel for report cards
+            FlowLayoutPanel reportCardsPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                AutoScroll = true,
+                Padding = new Padding(0, 20, 0, 0)
+            };
+            
+            // Add report cards
+            Panel statsCard = CreateActionCard(
+                "Neighborhood Statistics", 
+                "View detailed statistics about the neighborhood", 
+                "",
+                (sender, e) => {
+                    NeighborhoodStatsForm statsForm = new NeighborhoodStatsForm(_controller);
+                    statsForm.ShowDialog();
+                });
+                
+            Panel memberAnalysisCard = CreateActionCard(
+                "Household Size Analysis", 
+                "Find households with most and fewest members", 
+                "",
+                (sender, e) => {
+                    MostFewestMembersForm membersForm = new MostFewestMembersForm(_controller);
+                    membersForm.ShowDialog();
+                });
+            
+            // Add cards to the flow panel
+            reportCardsPanel.Controls.Add(statsCard);
+            reportCardsPanel.Controls.Add(memberAnalysisCard);
+            
+            // Add controls to the reports panel
+            reportsPanel.Controls.Add(reportCardsPanel);
+            reportsPanel.Controls.Add(reportsTitle);
+            
+            // Add reports panel to main panel
+            mainPanel.Controls.Add(reportsPanel);
+        }
+        
+        /// <summary>
+        /// Initialize the settings panel
+        /// </summary>
+        private void InitializeSettingsPanel()
+        {
+            settingsPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = _panelColor,
+                Visible = false
+            };
+            
+            // Settings panel title
+            Label settingsTitle = new Label
+            {
+                Text = "Settings & File Operations",
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                ForeColor = _primaryColor,
+                Dock = DockStyle.Top,
+                Height = 40,
+                Padding = new Padding(0, 5, 0, 0)
+            };
+            
+            // Create a flow layout panel for setting cards
+            FlowLayoutPanel settingCardsPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                AutoScroll = true,
+                Padding = new Padding(0, 20, 0, 0)
+            };
+            
+            // Add setting cards
+            Panel openFileCard = CreateActionCard(
+                "Open File", 
+                "Load neighborhood data from a file", 
+                "",
+                (sender, e) => {
+                    // Create an open file dialog
+                    using (OpenFileDialog openFileDialog = new OpenFileDialog())
+                    {
+                        openFileDialog.Filter = "CSV files (*.csv)|*.csv|Text files (*.txt)|*.txt|All files (*.*)|*.*";
+                        openFileDialog.Title = "Open Neighborhood Data File";
+                        
+                        if (openFileDialog.ShowDialog() == DialogResult.OK)
+                        {
+                            string filename = openFileDialog.FileName;
+                            ReadFileForm readFileForm = new ReadFileForm(_controller, filename);
+                            readFileForm.ShowDialog();
+                            RefreshDashboard();
+                        }
+                    }
+                });
+                
+            Panel saveFileCard = CreateActionCard(
+                "Save File", 
+                "Save neighborhood data to a file", 
+                "",
+                (sender, e) => {
+                    // Create a save file dialog
+                    using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+                    {
+                        saveFileDialog.Filter = "CSV files (*.csv)|*.csv|Text files (*.txt)|*.txt|All files (*.*)|*.*";
+                        saveFileDialog.Title = "Save Neighborhood Data File";
+                        saveFileDialog.DefaultExt = "csv";
+                        
+                        if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                        {
+                            string filename = saveFileDialog.FileName;
+                            SaveFileForm saveFileForm = new SaveFileForm(_controller, filename);
+                            saveFileForm.ShowDialog();
+                        }
+                    }
+                });
+                
+            Panel aboutCard = CreateActionCard(
+                "About", 
+                "View information about this application", 
+                "",
+                (sender, e) => {
+                    MessageBox.Show(
+                        "Neighborhood Manager Application\nVersion 1.0\n\n" +
+                        "A professional application for managing neighborhood data\n" +
+                        "Developed for KhuPhoManager", 
+                        "About", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                });
+            
+            // Add cards to the flow panel
+            settingCardsPanel.Controls.Add(openFileCard);
+            settingCardsPanel.Controls.Add(saveFileCard);
+            settingCardsPanel.Controls.Add(aboutCard);
+            
+            // Add controls to the settings panel
+            settingsPanel.Controls.Add(settingCardsPanel);
+            settingsPanel.Controls.Add(settingsTitle);
+            
+            // Add settings panel to main panel
+            mainPanel.Controls.Add(settingsPanel);
+        }
+        
+        /// <summary>
+        /// Creates a navigation button for the sidebar
+        /// </summary>
+        private Button CreateNavButton(string text, string icon, int position)
+        {
+            Button button = new Button
+            {
+                Text = "  " + text,
+                TextAlign = ContentAlignment.MiddleLeft,
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(sidePanel.Width, 45),
+                Location = new Point(0, 100 + (position * 45)),
+                BackColor = _secondaryColor,
+                ForeColor = _textColor,
+                Font = new Font("Segoe UI", 10, FontStyle.Regular),
+                Cursor = Cursors.Hand,
+                ImageAlign = ContentAlignment.MiddleLeft,
+                TextImageRelation = TextImageRelation.ImageBeforeText,
+                Padding = new Padding(10, 0, 0, 0)
+            };
+            
+            // Remove border
             button.FlatAppearance.BorderSize = 0;
-            button.FlatAppearance.MouseOverBackColor = primaryColor;
-            button.FlatAppearance.MouseDownBackColor = primaryColor;
+            
+            // Add icon if available
+            if (!string.IsNullOrEmpty(icon))
+            {
+                button.Text = icon + " " + text;
+            }
+            
+            // Add hover effect
+            button.MouseEnter += (sender, e) => {
+                if (button != activeButton)
+                    button.BackColor = Color.FromArgb(30, 100, 167);
+            };
+            
+            button.MouseLeave += (sender, e) => {
+                if (button != activeButton)
+                    button.BackColor = _secondaryColor;
+            };
+            
+            // Add to navigation buttons list
+            navigationButtons.Add(button);
             
             return button;
         }
         
         /// <summary>
-        /// Activates a sidebar button and shows its corresponding panel
+        /// Creates an action card for the panels
         /// </summary>
-        private void ActivateButton(IconButton button, string panelName)
+        private Panel CreateActionCard(string title, string description, string icon, EventHandler clickHandler)
         {
-            if (button == null) return;
-            
-            // Deactivate current button if exists
-            if (activeButton != null)
+            Panel card = new Panel
             {
-                activeButton.BackColor = secondaryColor;
-                activeButton.ForeColor = textColor;
-                activeButton.IconColor = textColor;
-                activeButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
-            }
-            
-            // Activate new button
-            button.BackColor = primaryColor;
-            button.ForeColor = highlightColor;
-            button.IconColor = highlightColor;
-            button.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            activeButton = button;
-            
-            // Show active indicator
-            navIndicator.Height = button.Height;
-            navIndicator.Top = button.Top;
-            navIndicator.Left = 0;
-            navIndicator.Visible = true;
-            
-            // Show the corresponding panel
-            ShowPanel(panelName);
-        }
-        
-        /// <summary>
-        /// Shows the panel corresponding to the active button
-        /// </summary>
-        private void ShowPanel(string panelName)
-        {
-            // Hide all panels first
-            if (dashboardPanel != null) dashboardPanel.Visible = false;
-            if (householdListPanel != null) householdListPanel.Visible = false;
-            if (actionPanel != null) actionPanel.Visible = false;
-            
-            // Show the selected panel
-            switch (panelName)
-            {
-                case "Dashboard":
-                    if (dashboardPanel == null)
-                    {
-                        InitializeDashboardPanel();
-                        mainContentPanel.Controls.Add(dashboardPanel);
-                    }
-                    dashboardPanel.Visible = true;
-                    activePanel = dashboardPanel;
-                    RefreshDashboard(null, null);
-                    break;
-                    
-                case "Households":
-                    if (householdListPanel == null)
-                    {
-                        InitializeHouseholdsPanel();
-                        mainContentPanel.Controls.Add(householdListPanel);
-                    }
-                    householdListPanel.Visible = true;
-                    activePanel = householdListPanel;
-                    RefreshHouseholdList();
-                    break;
-                    
-                case "People":
-                    if (actionPanel == null)
-                    {
-                        InitializePeoplePanel();
-                        mainContentPanel.Controls.Add(actionPanel);
-                    }
-                    actionPanel.Visible = true;
-                    activePanel = actionPanel;
-                    break;
-                
-                // Add more cases for other panels
-            }
-        }
-        
-        private void SortByAge_Click(object sender, EventArgs e)
-        {
-            SortByAgeForm sortByAgeForm = new SortByAgeForm(_controller);
-            sortByAgeForm.ShowDialog();
-        }
-        
-        private void Statistics_Click(object sender, EventArgs e)
-        {
-            NeighborhoodStatsForm statsForm = new NeighborhoodStatsForm(_controller);
-            statsForm.ShowDialog();
-        }
-        
-        private void MostFewestMembers_Click(object sender, EventArgs e)
-        {
-            MostFewestMembersForm mostFewestMembersForm = new MostFewestMembersForm(_controller);
-            mostFewestMembersForm.ShowDialog();
-        }
-        
-        private void About_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show(
-                "Neighborhood Manager\nVersion 1.0\n\nA Windows Forms application for managing neighborhoods, households, and residents.",
-                "About Neighborhood Manager",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information
-            );
-        }
-        
-        /// <summary>
-        /// Refreshes all dashboard elements with current data
-        /// </summary>
-        private void RefreshDashboard(object sender, EventArgs e)
-        {
-            try
-            {
-                // Update status
-                statusLabel.Text = $"Last updated: {DateTime.Now.ToString("g")}";
-                
-                // Refresh household list
-                RefreshHouseholdList();
-                
-                // Refresh statistics panel
-                RefreshStatisticsPanel();
-            }
-            catch (Exception ex)
-            {
-                statusLabel.Text = $"Error refreshing dashboard: {ex.Message}";
-            }
-        }
-        
-        /// <summary>
-        /// Refreshes the household list view with current data
-        /// </summary>
-        private void RefreshHouseholdList()
-        {
-            householdListView.Items.Clear();
-            
-            var households = _controller.GetHouseholds();
-            foreach (var household in households)
-            {
-                var item = new ListViewItem(household.HouseNumber.ToString());
-                item.SubItems.Add(household.Members.Count.ToString());
-                item.SubItems.Add(household.AdultCount.ToString());
-                item.SubItems.Add(household.ChildCount.ToString());
-                item.Tag = household.HouseNumber;
-                householdListView.Items.Add(item);
-            }
-            
-            // Resize columns to fit content
-            foreach (ColumnHeader column in householdListView.Columns)
-            {
-                column.Width = -2; // Auto-size to column header and content
-            }
-        }
-        
-        /// <summary>
-        /// Refreshes the statistics panel with current data
-        /// </summary>
-        private void RefreshStatisticsPanel()
-        {
-            // Clear existing controls except for design elements
-            foreach (Control control in statisticsPanel.Controls)
-            {
-                if (!(control is Label headerLabel) || headerLabel.Name != "statsHeader")
-                {
-                    control.Dispose();
-                }
-            }
-            statisticsPanel.Controls.Clear();
-            
-            // Add statistics header
-            Label header = new Label
-            {
-                Text = "Neighborhood Statistics",
-                Name = "statsHeader",
-                Font = new Font("Segoe UI", 12, FontStyle.Bold),
-                ForeColor = Color.FromArgb(40, 40, 100),
-                Location = new Point(10, 10),
-                AutoSize = true
-            };
-            statisticsPanel.Controls.Add(header);
-            
-            // Create stat boxes for key metrics
-            CreateStatBox("Total Households", _controller.GetHouseholdCount().ToString(), new Point(20, 50), Color.FromArgb(30, 30, 65));
-            CreateStatBox("Total Population", _controller.GetTotalPopulation().ToString(), new Point(200, 50), Color.FromArgb(0, 120, 215));
-            CreateStatBox("Adults", _controller.GetTotalAdults().ToString(), new Point(380, 50), Color.FromArgb(0, 130, 130));
-            CreateStatBox("Children", _controller.GetTotalChildren().ToString(), new Point(560, 50), Color.FromArgb(200, 30, 90));
-            
-            // Add some additional info if available
-            if (_controller.GetHouseholdCount() > 0)
-            {
-                var avgMembers = (double)_controller.GetTotalPopulation() / _controller.GetHouseholdCount();
-                CreateStatBox("Avg Members/Household", avgMembers.ToString("F1"), new Point(740, 50), Color.FromArgb(140, 100, 190));
-                
-                // Could add more derived statistics here
-            }
-        }
-        
-        /// <summary>
-        /// Creates a beautiful statistics box on the statistics panel
-        /// </summary>
-        private void CreateStatBox(string title, string value, Point location, Color color)
-        {
-            Panel statBox = new Panel
-            {
-                Width = 200,
-                Height = 100,
-                Location = location,
-                BackColor = Color.White
+                Width = 300,
+                Height = 150,
+                Margin = new Padding(15),
+                BackColor = Color.White,
+                Cursor = Cursors.Hand
             };
             
-            // Add shadow and rounded corners to the stat box
-            statBox.Paint += (sender, e) => {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            // Add shadow and rounded corners
+            card.Paint += (sender, e) => {
+                Graphics g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
                 
                 // Create rounded rectangle path
-                using (var path = new GraphicsPath())
+                GraphicsPath path = new GraphicsPath();
+                int radius = 10;
+                Rectangle rect = new Rectangle(0, 0, card.Width - 1, card.Height - 1);
+                
+                // Add arcs for rounded corners
+                path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);                  // Top-left
+                path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);  // Top-right
+                path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);  // Bottom-right
+                path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);  // Bottom-left
+                path.CloseAllFigures();
+                
+                // Draw shadow
+                using (GraphicsPath shadowPath = (GraphicsPath)path.Clone())
                 {
-                    int radius = 10;
-                    Rectangle rect = new Rectangle(0, 0, statBox.Width - 1, statBox.Height - 1);
-                    path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
-                    path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
-                    path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
-                    path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
-                    path.CloseAllFigures();
-                    
-                    // Create gradient background
-                    using (LinearGradientBrush brush = new LinearGradientBrush(
-                        new Point(0, 0), new Point(statBox.Width, statBox.Height),
-                        Color.White, Color.FromArgb(10, color)))
+                    using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(30, 0, 0, 0)))
                     {
-                        e.Graphics.FillPath(brush, path);
+                        g.TranslateTransform(3, 3);
+                        g.FillPath(shadowBrush, shadowPath);
+                        g.ResetTransform();
                     }
-                    
-                    // Draw a thin border
-                    using (Pen pen = new Pen(Color.FromArgb(30, color), 1))
-                    {
-                        e.Graphics.DrawPath(pen, path);
-                    }
-                    
-                    // Add a colored indicator on top
-                    using (SolidBrush brush = new SolidBrush(color))
-                    {
-                        e.Graphics.FillRectangle(brush, new Rectangle(0, 0, statBox.Width, 4));
-                    }
+                }
+                
+                // Fill card background
+                g.FillPath(new SolidBrush(Color.White), path);
+                
+                // Draw accent line on left side
+                using (SolidBrush accentBrush = new SolidBrush(_primaryColor))
+                {
+                    g.FillRectangle(accentBrush, new Rectangle(0, 0, 5, card.Height));
                 }
             };
             
-            // Icon
-            IconPictureBox iconBox = new IconPictureBox
+            // Icon label
+            Label iconLabel = new Label
             {
-                IconChar = GetIconForStat(title),
-                IconSize = 32,
-                IconColor = color,
-                BackColor = Color.Transparent,
-                Size = new Size(40, 40),
-                Location = new Point(15, 15)
-            };
-            
-            // Value label
-            Label valueLabel = new Label
-            {
-                Text = value,
-                Font = new Font("Segoe UI Semibold", 20, FontStyle.Bold),
-                ForeColor = color,
-                TextAlign = ContentAlignment.MiddleRight,
-                Location = new Point(60, 15),
-                Size = new Size(125, 40),
-                AutoSize = false
+                Text = icon,
+                Font = new Font("Segoe UI", 24, FontStyle.Regular),
+                Location = new Point(20, 20),
+                Size = new Size(50, 50),
+                TextAlign = ContentAlignment.MiddleCenter
             };
             
             // Title label
             Label titleLabel = new Label
             {
                 Text = title,
-                Font = new Font("Segoe UI", 9, FontStyle.Regular),
-                ForeColor = Color.Gray,
-                TextAlign = ContentAlignment.MiddleLeft,
-                Location = new Point(15, 65),
-                Size = new Size(170, 20),
-                AutoSize = false
-            };
-            
-            statBox.Controls.Add(iconBox);
-            statBox.Controls.Add(valueLabel);
-            statBox.Controls.Add(titleLabel);
-            statisticsPanel.Controls.Add(statBox);
-        }
-        
-        /// <summary>
-        /// Returns an appropriate icon for the stat box based on its title
-        /// </summary>
-        private IconChar GetIconForStat(string title)
-        {
-            if (title.Contains("Household")) return IconChar.Home;
-            if (title.Contains("Population")) return IconChar.Users;
-            if (title.Contains("Adult")) return IconChar.UserTie;
-            if (title.Contains("Children")) return IconChar.Child;
-            if (title.Contains("Avg")) return IconChar.ChartLine;
-            
-            return IconChar.InfoCircle;
-        }
-        
-        /// <summary>
-        /// Handles the View Details button click for households
-        /// </summary>
-        private void ViewHouseholdDetails_Click(object sender, EventArgs e)
-        {
-            if (householdListView.SelectedItems.Count == 0)
-            {
-                MessageBox.Show("Please select a household to view details.", "Selection Required", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-            
-            int houseNumber = (int)householdListView.SelectedItems[0].Tag;
-            var household = _controller.GetHouseholds().FirstOrDefault(h => h.HouseNumber == houseNumber);
-            
-            if (household != null)
-            {
-                HouseholdDetailsForm detailsForm = new HouseholdDetailsForm(_controller, household);
-                detailsForm.ShowDialog();
-                
-                // Refresh the dashboard after viewing details in case changes were made
-                RefreshDashboard(sender, e);
-            }
-        }
-        
-        /// <summary>
-        /// Initialize the main dashboard panel with statistics and overview
-        /// </summary>
-        private void InitializeDashboardPanel()
-        {
-            // Create main dashboard panel if it doesn't exist
-            if (dashboardPanel == null)
-            {
-                dashboardPanel = new Panel
-                {
-                    Dock = DockStyle.Fill,
-                    Visible = false,
-                    Padding = new Padding(15, 15, 15, 15),
-                    BackColor = panelColor
-                };
-                
-                // Create statistics panel
-                statisticsPanel = new Panel
-                {
-                    Dock = DockStyle.Top,
-                    Height = 150,
-                    Margin = new Padding(0, 0, 0, 15),
-                    BackColor = Color.Transparent
-                };
-                
-                // Create quick overview panel
-                Panel overviewPanel = new Panel
-                {
-                    Dock = DockStyle.Fill,
-                    Padding = new Padding(0),
-                    BackColor = Color.White
-                };
-                
-                // Add rounded corners to the overview panel
-                overviewPanel.Paint += (sender, e) => {
-                    e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                    using (var path = new GraphicsPath())
-                    {
-                        int radius = 10;
-                        Rectangle rect = new Rectangle(0, 0, overviewPanel.Width - 1, overviewPanel.Height - 1);
-                        path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
-                        path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
-                        path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
-                        path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
-                        path.CloseAllFigures();
-                        
-                        e.Graphics.FillPath(new SolidBrush(Color.White), path);
-                        
-                        // Add a subtle shadow
-                        using (Pen pen = new Pen(Color.FromArgb(20, 0, 0, 0), 1))
-                        {
-                            e.Graphics.DrawPath(pen, path);
-                        }
-                    }
-                };
-                
-                Label overviewTitle = new Label
-                {
-                    Text = "Neighborhood Overview",
-                    Font = new Font("Segoe UI Semibold", 12, FontStyle.Bold),
-                    ForeColor = primaryColor,
-                    TextAlign = ContentAlignment.MiddleLeft,
-                    Location = new Point(20, 15),
-                    AutoSize = true
-                };
-                
-                // Add components to the panels
-                overviewPanel.Controls.Add(overviewTitle);
-                
-                // Add panels to the dashboard
-                dashboardPanel.Controls.Add(overviewPanel);
-                dashboardPanel.Controls.Add(statisticsPanel);
-            }
-        }
-        
-        /// <summary>
-        /// Initialize the households panel with list and controls
-        /// </summary>
-        private void InitializeHouseholdsPanel()
-        {
-            // Create household panel if it doesn't exist
-            if (householdListPanel == null)
-            {
-                householdListPanel = new Panel
-                {
-                    Dock = DockStyle.Fill,
-                    Visible = false,
-                    Padding = new Padding(15, 15, 15, 15),
-                    BackColor = panelColor
-                };
-                
-                // Create the main content panel
-                Panel contentPanel = new Panel
-                {
-                    Dock = DockStyle.Fill,
-                    BackColor = Color.White
-                };
-                
-                // Add rounded corners to content panel
-                contentPanel.Paint += (sender, e) => {
-                    e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                    using (var path = new GraphicsPath())
-                    {
-                        int radius = 10;
-                        Rectangle rect = new Rectangle(0, 0, contentPanel.Width - 1, contentPanel.Height - 1);
-                        path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
-                        path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
-                        path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
-                        path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
-                        path.CloseAllFigures();
-                        
-                        e.Graphics.FillPath(new SolidBrush(Color.White), path);
-                        
-                        // Add a subtle shadow
-                        using (Pen pen = new Pen(Color.FromArgb(20, 0, 0, 0), 1))
-                        {
-                            e.Graphics.DrawPath(pen, path);
-                        }
-                    }
-                };
-                
-                // Create a title for the panel
-                Label panelTitle = new Label
-                {
-                    Text = "All Households",
-                    Font = new Font("Segoe UI Semibold", 12, FontStyle.Bold),
-                    ForeColor = primaryColor,
-                    Dock = DockStyle.Top,
-                    Height = 40,
-                    Padding = new Padding(15, 15, 0, 0)
-                };
-                
-                // Create actions panel for buttons
-                Panel actionsPanel = new Panel
-                {
-                    Dock = DockStyle.Bottom,
-                    Height = 60,
-                    Padding = new Padding(15, 10, 15, 10),
-                    BackColor = Color.Transparent
-                };
-                
-                // Create add household button
-                IconButton addButton = new IconButton
-                {
-                    Text = "Add Household",
-                    IconChar = IconChar.Plus,
-                    IconColor = Color.White,
-                    ForeColor = Color.White,
-                    BackColor = primaryColor,
-                    FlatStyle = FlatStyle.Flat,
-                    Size = new Size(150, 40),
-                    Location = new Point(0, 10),
-                    TextImageRelation = TextImageRelation.ImageBeforeText,
-                    ImageAlign = ContentAlignment.MiddleLeft,
-                    TextAlign = ContentAlignment.MiddleLeft,
-                    Padding = new Padding(10, 0, 0, 0),
-                    Font = new Font("Segoe UI", 9F)
-                };
-                addButton.FlatAppearance.BorderSize = 0;
-                addButton.Click += AddHousehold_Click;
-                
-                // Create remove household button
-                IconButton removeButton = new IconButton
-                {
-                    Text = "Remove",
-                    IconChar = IconChar.Trash,
-                    IconColor = Color.White,
-                    ForeColor = Color.White,
-                    BackColor = Color.FromArgb(220, 53, 69), // Red
-                    FlatStyle = FlatStyle.Flat,
-                    Size = new Size(100, 40),
-                    Location = new Point(160, 10),
-                    TextImageRelation = TextImageRelation.ImageBeforeText,
-                    ImageAlign = ContentAlignment.MiddleLeft,
-                    TextAlign = ContentAlignment.MiddleLeft,
-                    Padding = new Padding(10, 0, 0, 0),
-                    Font = new Font("Segoe UI", 9F)
-                };
-                removeButton.FlatAppearance.BorderSize = 0;
-                removeButton.Click += RemoveHousehold_Click;
-                
-                // Create view details button
-                IconButton viewButton = new IconButton
-                {
-                    Text = "View Details",
-                    IconChar = IconChar.Eye,
-                    IconColor = Color.White,
-                    ForeColor = Color.White,
-                    BackColor = Color.FromArgb(23, 162, 184), // Info blue
-                    FlatStyle = FlatStyle.Flat,
-                    Size = new Size(130, 40),
-                    Location = new Point(270, 10),
-                    TextImageRelation = TextImageRelation.ImageBeforeText,
-                    ImageAlign = ContentAlignment.MiddleLeft,
-                    TextAlign = ContentAlignment.MiddleLeft,
-                    Padding = new Padding(10, 0, 0, 0),
-                    Font = new Font("Segoe UI", 9F)
-                };
-                viewButton.FlatAppearance.BorderSize = 0;
-                viewButton.Click += ViewHouseholdDetails_Click;
-                
-                // Create household list view
-                householdListView = new ListView
-                {
-                    Dock = DockStyle.Fill,
-                    View = View.Details,
-                    FullRowSelect = true,
-                    GridLines = false,
-                    BackColor = Color.White,
-                    BorderStyle = BorderStyle.None,
-                    Font = new Font("Segoe UI", 9F)
-                };
-                
-                // Configure household list view columns
-                householdListView.Columns.Add("House #", 100);
-                householdListView.Columns.Add("Total Members", 120);
-                householdListView.Columns.Add("Adults", 100);
-                householdListView.Columns.Add("Children", 100);
-                
-                // Add controls to the panels
-                actionsPanel.Controls.Add(addButton);
-                actionsPanel.Controls.Add(removeButton);
-                actionsPanel.Controls.Add(viewButton);
-                
-                contentPanel.Controls.Add(householdListView);
-                contentPanel.Controls.Add(panelTitle);
-                
-                householdListPanel.Controls.Add(contentPanel);
-                householdListPanel.Controls.Add(actionsPanel);
-            }
-        }
-        
-        /// <summary>
-        /// Initialize the People panel with filtering and search options
-        /// </summary>
-        private void InitializePeoplePanel()
-        {
-            // Create people panel if it doesn't exist or recreate it
-            if (actionPanel == null)
-            {
-                actionPanel = new Panel
-                {
-                    Dock = DockStyle.Fill,
-                    Visible = false,
-                    Padding = new Padding(15, 15, 15, 15),
-                    BackColor = panelColor
-                };
-                
-                // Add components and functionality as needed similar to the other panels
-                Panel contentPanel = new Panel
-                {
-                    Dock = DockStyle.Fill,
-                    BackColor = Color.White
-                };
-                
-                // Add rounded corners to content panel
-                contentPanel.Paint += (sender, e) => {
-                    e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                    using (var path = new GraphicsPath())
-                    {
-                        int radius = 10;
-                        Rectangle rect = new Rectangle(0, 0, contentPanel.Width - 1, contentPanel.Height - 1);
-                        path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
-                        path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
-                        path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
-                        path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
-                        path.CloseAllFigures();
-                        
-                        e.Graphics.FillPath(new SolidBrush(Color.White), path);
-                        
-                        // Add a subtle shadow
-                        using (Pen pen = new Pen(Color.FromArgb(20, 0, 0, 0), 1))
-                        {
-                            e.Graphics.DrawPath(pen, path);
-                        }
-                    }
-                };
-                
-                Label peopleTitle = new Label
-                {
-                    Text = "People Management",
-                    Font = new Font("Segoe UI Semibold", 12, FontStyle.Bold),
-                    ForeColor = primaryColor,
-                    Dock = DockStyle.Top,
-                    Height = 40,
-                    Padding = new Padding(15, 15, 0, 0)
-                };
-                
-                // Create a FlowLayoutPanel for the people management functions
-                FlowLayoutPanel peopleActionsPanel = new FlowLayoutPanel
-                {
-                    Dock = DockStyle.Fill,
-                    FlowDirection = FlowDirection.TopDown,
-                    WrapContents = false,
-                    Padding = new Padding(20, 20, 20, 20),
-                    AutoScroll = true
-                };
-                
-                // Create action cards for people management
-                AddActionCard(peopleActionsPanel, "Find Person", "Search for a person by ID or name", IconChar.Search, FindPerson_Click);
-                AddActionCard(peopleActionsPanel, "Add Person", "Add a new person to a household", IconChar.UserPlus, AddPerson_Click);
-                AddActionCard(peopleActionsPanel, "Sort by Age", "View all people sorted by age", IconChar.SortAmountDown, SortByAge_Click);
-                
-                contentPanel.Controls.Add(peopleActionsPanel);
-                contentPanel.Controls.Add(peopleTitle);
-                
-                actionPanel.Controls.Add(contentPanel);
-            }
-        }
-        
-        /// <summary>
-        /// Helper method to create action cards for the people panel
-        /// </summary>
-        private void AddActionCard(FlowLayoutPanel parent, string title, string description, IconChar icon, EventHandler clickHandler)
-        {
-            Panel card = new Panel
-            {
-                Width = parent.Width - 50,
-                Height = 100,
-                Margin = new Padding(0, 0, 0, 15),
-                BackColor = Color.White,
-                Cursor = Cursors.Hand
-            };
-            
-            // Add shadow and hover effect
-            card.Paint += (sender, e) => {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var path = new GraphicsPath())
-                {
-                    int radius = 10;
-                    Rectangle rect = new Rectangle(0, 0, card.Width - 1, card.Height - 1);
-                    path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
-                    path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
-                    path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
-                    path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
-                    path.CloseAllFigures();
-                    
-                    // Draw shadow
-                    using (var shadowPath = (GraphicsPath)path.Clone())
-                    {
-                        using (var shadowBrush = new SolidBrush(Color.FromArgb(20, 0, 0, 0)))
-                        {
-                            e.Graphics.TranslateTransform(2, 2);
-                            e.Graphics.FillPath(shadowBrush, shadowPath);
-                            e.Graphics.ResetTransform();
-                        }
-                    }
-                    
-                    e.Graphics.FillPath(new SolidBrush(Color.White), path);
-                    
-                    // Add a color indicator on the left side
-                    using (var leftBar = new SolidBrush(primaryColor))
-                    {
-                        e.Graphics.FillRectangle(leftBar, new Rectangle(0, 0, 5, card.Height));
-                    }
-                }
-            };
-            
-            // Add icon
-            IconPictureBox iconBox = new IconPictureBox
-            {
-                IconChar = icon,
-                IconSize = 40,
-                IconColor = primaryColor,
-                BackColor = Color.Transparent,
-                Size = new Size(50, 50),
-                Location = new Point(20, 25)
-            };
-            
-            // Add title
-            Label titleLabel = new Label
-            {
-                Text = title,
                 Font = new Font("Segoe UI Semibold", 12, FontStyle.Bold),
-                ForeColor = primaryColor,
-                Location = new Point(80, 20),
+                ForeColor = _primaryColor,
+                Location = new Point(80, 30),
                 AutoSize = true
             };
             
-            // Add description
+            // Description label
             Label descLabel = new Label
             {
                 Text = description,
                 Font = new Font("Segoe UI", 9),
                 ForeColor = Color.Gray,
-                Location = new Point(80, 50),
-                Size = new Size(300, 30),
-                AutoSize = false
+                Location = new Point(20, 90),
+                Size = new Size(260, 40),
+                TextAlign = ContentAlignment.TopLeft
             };
             
             // Add controls to card
-            card.Controls.Add(iconBox);
+            card.Controls.Add(iconLabel);
             card.Controls.Add(titleLabel);
             card.Controls.Add(descLabel);
             
             // Add click handler
             card.Click += clickHandler;
-            // Make sure all child controls pass clicks to parent
+            
+            // Make sure child controls pass clicks to parent
             foreach (Control control in card.Controls)
             {
                 control.Click += clickHandler;
             }
             
-            parent.Controls.Add(card);
+            return card;
+        }
+        
+        /// <summary>
+        /// Refreshes the dashboard with current data
+        /// </summary>
+        private void RefreshDashboard()
+        {
+            // Refresh statistics
+            RefreshStatistics();
+            
+            // Refresh household list
+            LoadHouseholdList();
+            
+            // Update status label
+            UpdateStatusLabel();
+        }
+        
+        /// <summary>
+        /// Refreshes the statistics panel with current data
+        /// </summary>
+        private void RefreshStatistics()
+        {
+            // Clear existing statistics
+            statisticsPanel.Controls.Clear();
+            
+            // Create a flow layout for statistics cards
+            FlowLayoutPanel statsFlow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoScroll = true
+            };
+            
+            // Get statistics from controller
+            int totalHouseholds = _controller.GetHouseholdCount();
+            int totalAdults = _controller.GetTotalAdults();
+            int totalChildren = _controller.GetTotalChildren();
+            int totalPopulation = _controller.GetTotalPopulation();
+            double avgHouseholdSize = totalHouseholds > 0 ? Math.Round((double)totalPopulation / totalHouseholds, 2) : 0;
+            
+            // Create statistics cards
+            CreateStatCard(statsFlow, "Total Households", totalHouseholds.ToString(), _primaryColor);
+            CreateStatCard(statsFlow, "Total Adults", totalAdults.ToString(), _secondaryColor);
+            CreateStatCard(statsFlow, "Total Children", totalChildren.ToString(), _accentColor);
+            CreateStatCard(statsFlow, "Total Population", totalPopulation.ToString(), _highlightColor);
+            CreateStatCard(statsFlow, "Avg. Household Size", avgHouseholdSize.ToString(), Color.FromArgb(75, 192, 192));
+            
+            // Add flow panel to statistics panel
+            statisticsPanel.Controls.Add(statsFlow);
+        }
+        
+        /// <summary>
+        /// Creates a statistic card for the statistics panel
+        /// </summary>
+        private void CreateStatCard(FlowLayoutPanel parent, string title, string value, Color color)
+        {
+            Panel statCard = new Panel
+            {
+                Width = 180,
+                Height = parent.Height - 20,
+                Margin = new Padding(10, 10, 10, 10),
+                BackColor = Color.White
+            };
+            
+            // Add shadow and rounded corners
+            statCard.Paint += (sender, e) => {
+                Graphics g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                
+                // Create rounded rectangle path
+                GraphicsPath path = new GraphicsPath();
+                int radius = 10;
+                Rectangle rect = new Rectangle(0, 0, statCard.Width - 1, statCard.Height - 1);
+                
+                // Add arcs for rounded corners
+                path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);                  // Top-left
+                path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);  // Top-right
+                path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);  // Bottom-right
+                path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);  // Bottom-left
+                path.CloseAllFigures();
+                
+                // Draw shadow
+                using (GraphicsPath shadowPath = (GraphicsPath)path.Clone())
+                {
+                    using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(20, 0, 0, 0)))
+                    {
+                        g.TranslateTransform(2, 2);
+                        g.FillPath(shadowBrush, shadowPath);
+                        g.ResetTransform();
+                    }
+                }
+                
+                // Fill card background
+                g.FillPath(new SolidBrush(Color.White), path);
+                
+                // Draw top colored accent
+                using (SolidBrush accentBrush = new SolidBrush(color))
+                {
+                    g.FillRectangle(accentBrush, new Rectangle(0, 0, statCard.Width, 5));
+                }
+            };
+            
+            // Value label
+            Label valueLabel = new Label
+            {
+                Text = value,
+                Font = new Font("Segoe UI", 24, FontStyle.Bold),
+                ForeColor = color,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Size = new Size(statCard.Width, 50),
+                Location = new Point(0, 20)
+            };
+            
+            // Title label
+            Label titleLabel = new Label
+            {
+                Text = title,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Color.Gray,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Size = new Size(statCard.Width, 20),
+                Location = new Point(0, 70)
+            };
+            
+            // Add controls to stat card
+            statCard.Controls.Add(valueLabel);
+            statCard.Controls.Add(titleLabel);
+            
+            // Add stat card to parent
+            parent.Controls.Add(statCard);
+        }
+        
+        /// <summary>
+        /// Loads the household list with current data
+        /// </summary>
+        private void LoadHouseholdList()
+        {
+            // Clear existing items
+            householdListView.Items.Clear();
+            
+            // Get households from controller
+            var households = _controller.GetHouseholds();
+            
+            // Add each household to the list
+            foreach (var household in households)
+            {
+                int adultCount = household.AdultCount;
+                int childCount = household.ChildCount;
+                int totalMembers = adultCount + childCount;
+                
+                ListViewItem item = new ListViewItem(household.HouseNumber.ToString());
+                item.SubItems.Add(household.Address ?? "No Address");
+                item.SubItems.Add(adultCount.ToString());
+                item.SubItems.Add(childCount.ToString());
+                item.SubItems.Add(totalMembers.ToString());
+                
+                // Alternate row colors for better readability
+                item.BackColor = householdListView.Items.Count % 2 == 0 
+                    ? Color.White 
+                    : Color.FromArgb(245, 245, 245);
+                
+                householdListView.Items.Add(item);
+            }
         }
     }
 }
