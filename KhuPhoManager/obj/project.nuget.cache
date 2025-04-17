@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "dgSpecHash": "5RU8Bx+SVtA=",
+  "success": true,
+  "projectFilePath": "D:\\Workspace\\Project\\KhuPhoManager\\KhuPhoManager\\KhuPhoManager.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\ngoct\\.nuget\\packages\\fontawesome.sharp\\6.3.0\\fontawesome.sharp.6.3.0.nupkg.sha512",
+    "C:\\Users\\ngoct\\.nuget\\packages\\system.windows.forms.datavisualization\\1.0.0-prerelease.20110.1\\system.windows.forms.datavisualization.1.0.0-prerelease.20110.1.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1900",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Error occurred while getting package vulnerability data: Unable to load the service index for source https://gitlab.gnome.org/GNOME/libxml2/-/releases/v2.10.3/evidences/1075.json."
+    }
+  ]
+}

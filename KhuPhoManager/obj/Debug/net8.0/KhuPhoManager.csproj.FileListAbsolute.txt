@@ -1,0 +1,14 @@
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\obj\Debug\net8.0\KhuPhoManager.GeneratedMSBuildEditorConfig.editorconfig
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\obj\Debug\net8.0\KhuPhoManager.AssemblyInfoInputs.cache
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\obj\Debug\net8.0\KhuPhoManager.AssemblyInfo.cs
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\obj\Debug\net8.0\KhuPhoManager.csproj.CoreCompileInputs.cache
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\bin\Debug\net8.0\KhuPhoManager.exe
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\bin\Debug\net8.0\KhuPhoManager.deps.json
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\bin\Debug\net8.0\KhuPhoManager.runtimeconfig.json
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\bin\Debug\net8.0\KhuPhoManager.dll
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\bin\Debug\net8.0\KhuPhoManager.pdb
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\obj\Debug\net8.0\KhuPhoManager.dll
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\obj\Debug\net8.0\refint\KhuPhoManager.dll
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\obj\Debug\net8.0\KhuPhoManager.pdb
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\obj\Debug\net8.0\KhuPhoManager.genruntimeconfig.cache
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\obj\Debug\net8.0\ref\KhuPhoManager.dll
