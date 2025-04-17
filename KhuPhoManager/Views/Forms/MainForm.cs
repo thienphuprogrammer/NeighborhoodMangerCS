@@ -1030,6 +1030,238 @@ namespace KhuPhoManager.Views.Forms
         }
         
         /// <summary>
+        /// Initialize the main dashboard panel with statistics and overview
+        /// </summary>
+        private void InitializeDashboardPanel()
+        {
+            // Create main dashboard panel if it doesn't exist
+            if (dashboardPanel == null)
+            {
+                dashboardPanel = new Panel
+                {
+                    Dock = DockStyle.Fill,
+                    Visible = false,
+                    Padding = new Padding(15, 15, 15, 15),
+                    BackColor = panelColor
+                };
+                
+                // Create statistics panel
+                statisticsPanel = new Panel
+                {
+                    Dock = DockStyle.Top,
+                    Height = 150,
+                    Margin = new Padding(0, 0, 0, 15),
+                    BackColor = Color.Transparent
+                };
+                
+                // Create quick overview panel
+                Panel overviewPanel = new Panel
+                {
+                    Dock = DockStyle.Fill,
+                    Padding = new Padding(0),
+                    BackColor = Color.White
+                };
+                
+                // Add rounded corners to the overview panel
+                overviewPanel.Paint += (sender, e) => {
+                    e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                    using (var path = new GraphicsPath())
+                    {
+                        int radius = 10;
+                        Rectangle rect = new Rectangle(0, 0, overviewPanel.Width - 1, overviewPanel.Height - 1);
+                        path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
+                        path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
+                        path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+                        path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+                        path.CloseAllFigures();
+                        
+                        e.Graphics.FillPath(new SolidBrush(Color.White), path);
+                        
+                        // Add a subtle shadow
+                        using (Pen pen = new Pen(Color.FromArgb(20, 0, 0, 0), 1))
+                        {
+                            e.Graphics.DrawPath(pen, path);
+                        }
+                    }
+                };
+                
+                Label overviewTitle = new Label
+                {
+                    Text = "Neighborhood Overview",
+                    Font = new Font("Segoe UI Semibold", 12, FontStyle.Bold),
+                    ForeColor = primaryColor,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Location = new Point(20, 15),
+                    AutoSize = true
+                };
+                
+                // Add components to the panels
+                overviewPanel.Controls.Add(overviewTitle);
+                
+                // Add panels to the dashboard
+                dashboardPanel.Controls.Add(overviewPanel);
+                dashboardPanel.Controls.Add(statisticsPanel);
+            }
+        }
+        
+        /// <summary>
+        /// Initialize the households panel with list and controls
+        /// </summary>
+        private void InitializeHouseholdsPanel()
+        {
+            // Create household panel if it doesn't exist
+            if (householdListPanel == null)
+            {
+                householdListPanel = new Panel
+                {
+                    Dock = DockStyle.Fill,
+                    Visible = false,
+                    Padding = new Padding(15, 15, 15, 15),
+                    BackColor = panelColor
+                };
+                
+                // Create the main content panel
+                Panel contentPanel = new Panel
+                {
+                    Dock = DockStyle.Fill,
+                    BackColor = Color.White
+                };
+                
+                // Add rounded corners to content panel
+                contentPanel.Paint += (sender, e) => {
+                    e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                    using (var path = new GraphicsPath())
+                    {
+                        int radius = 10;
+                        Rectangle rect = new Rectangle(0, 0, contentPanel.Width - 1, contentPanel.Height - 1);
+                        path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
+                        path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
+                        path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+                        path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+                        path.CloseAllFigures();
+                        
+                        e.Graphics.FillPath(new SolidBrush(Color.White), path);
+                        
+                        // Add a subtle shadow
+                        using (Pen pen = new Pen(Color.FromArgb(20, 0, 0, 0), 1))
+                        {
+                            e.Graphics.DrawPath(pen, path);
+                        }
+                    }
+                };
+                
+                // Create a title for the panel
+                Label panelTitle = new Label
+                {
+                    Text = "All Households",
+                    Font = new Font("Segoe UI Semibold", 12, FontStyle.Bold),
+                    ForeColor = primaryColor,
+                    Dock = DockStyle.Top,
+                    Height = 40,
+                    Padding = new Padding(15, 15, 0, 0)
+                };
+                
+                // Create actions panel for buttons
+                Panel actionsPanel = new Panel
+                {
+                    Dock = DockStyle.Bottom,
+                    Height = 60,
+                    Padding = new Padding(15, 10, 15, 10),
+                    BackColor = Color.Transparent
+                };
+                
+                // Create add household button
+                IconButton addButton = new IconButton
+                {
+                    Text = "Add Household",
+                    IconChar = IconChar.Plus,
+                    IconColor = Color.White,
+                    ForeColor = Color.White,
+                    BackColor = primaryColor,
+                    FlatStyle = FlatStyle.Flat,
+                    Size = new Size(150, 40),
+                    Location = new Point(0, 10),
+                    TextImageRelation = TextImageRelation.ImageBeforeText,
+                    ImageAlign = ContentAlignment.MiddleLeft,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Padding = new Padding(10, 0, 0, 0),
+                    Font = new Font("Segoe UI", 9F)
+                };
+                addButton.FlatAppearance.BorderSize = 0;
+                addButton.Click += AddHousehold_Click;
+                
+                // Create remove household button
+                IconButton removeButton = new IconButton
+                {
+                    Text = "Remove",
+                    IconChar = IconChar.Trash,
+                    IconColor = Color.White,
+                    ForeColor = Color.White,
+                    BackColor = Color.FromArgb(220, 53, 69), // Red
+                    FlatStyle = FlatStyle.Flat,
+                    Size = new Size(100, 40),
+                    Location = new Point(160, 10),
+                    TextImageRelation = TextImageRelation.ImageBeforeText,
+                    ImageAlign = ContentAlignment.MiddleLeft,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Padding = new Padding(10, 0, 0, 0),
+                    Font = new Font("Segoe UI", 9F)
+                };
+                removeButton.FlatAppearance.BorderSize = 0;
+                removeButton.Click += RemoveHousehold_Click;
+                
+                // Create view details button
+                IconButton viewButton = new IconButton
+                {
+                    Text = "View Details",
+                    IconChar = IconChar.Eye,
+                    IconColor = Color.White,
+                    ForeColor = Color.White,
+                    BackColor = Color.FromArgb(23, 162, 184), // Info blue
+                    FlatStyle = FlatStyle.Flat,
+                    Size = new Size(130, 40),
+                    Location = new Point(270, 10),
+                    TextImageRelation = TextImageRelation.ImageBeforeText,
+                    ImageAlign = ContentAlignment.MiddleLeft,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Padding = new Padding(10, 0, 0, 0),
+                    Font = new Font("Segoe UI", 9F)
+                };
+                viewButton.FlatAppearance.BorderSize = 0;
+                viewButton.Click += ViewHouseholdDetails_Click;
+                
+                // Create household list view
+                householdListView = new ListView
+                {
+                    Dock = DockStyle.Fill,
+                    View = View.Details,
+                    FullRowSelect = true,
+                    GridLines = false,
+                    BackColor = Color.White,
+                    BorderStyle = BorderStyle.None,
+                    Font = new Font("Segoe UI", 9F)
+                };
+                
+                // Configure household list view columns
+                householdListView.Columns.Add("House #", 100);
+                householdListView.Columns.Add("Total Members", 120);
+                householdListView.Columns.Add("Adults", 100);
+                householdListView.Columns.Add("Children", 100);
+                
+                // Add controls to the panels
+                actionsPanel.Controls.Add(addButton);
+                actionsPanel.Controls.Add(removeButton);
+                actionsPanel.Controls.Add(viewButton);
+                
+                contentPanel.Controls.Add(householdListView);
+                contentPanel.Controls.Add(panelTitle);
+                
+                householdListPanel.Controls.Add(contentPanel);
+                householdListPanel.Controls.Add(actionsPanel);
+            }
+        }
+        
+        /// <summary>
         /// Initialize the People panel with filtering and search options
         /// </summary>
         private void InitializePeoplePanel()

@@ -16,3 +16,4 @@ D:\Workspace\Project\KhuPhoManager\KhuPhoManager\obj\Debug\net8.0-windows\KhuPho
 D:\Workspace\Project\KhuPhoManager\KhuPhoManager\obj\Debug\net8.0-windows\KhuPhoManager.genruntimeconfig.cache
 D:\Workspace\Project\KhuPhoManager\KhuPhoManager\obj\Debug\net8.0-windows\ref\KhuPhoManager.dll
 D:\Workspace\Project\KhuPhoManager\KhuPhoManager\obj\Debug\net8.0-windows\KhuPhoManager.sourcelink.json
+D:\Workspace\Project\KhuPhoManager\KhuPhoManager\bin\Debug\net8.0-windows\FontAwesome.Sharp.dll
