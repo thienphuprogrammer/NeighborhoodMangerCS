@@ -57,74 +57,169 @@ namespace KhuPhoManager.Views.Forms
         {
             this.SuspendLayout();
             
-            // MainForm
+            // MainForm - Set up the main form
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1200, 800);
+            this.ClientSize = new System.Drawing.Size(1280, 800);
             this.Name = "MainForm";
-            this.Text = "Neighborhood Manager - Dashboard";
+            this.Text = "Neighborhood Manager";
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
-            this.MinimumSize = new Size(1200, 800);
+            this.MinimumSize = new Size(1280, 800);
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = true;
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.BackColor = Color.White;
             
-            // Create menu
-            MenuStrip mainMenu = new MenuStrip();
-            mainMenu.BackColor = Color.FromArgb(30, 30, 65);
-            mainMenu.ForeColor = Color.White;
-            this.MainMenuStrip = mainMenu;
+            // Create the main layout structure
+            // 1. Sidebar panel for navigation
+            sidebarPanel = new Panel
+            {
+                Width = 250,
+                Dock = DockStyle.Left,
+                BackColor = secondaryColor,
+                Padding = new Padding(0, 20, 0, 0)
+            };
             
-            // File menu
-            ToolStripMenuItem fileMenu = new ToolStripMenuItem("File");
-            fileMenu.ForeColor = Color.White;
-            ToolStripMenuItem openMenuItem = new ToolStripMenuItem("Open", null, OpenFile_Click);
-            ToolStripMenuItem saveMenuItem = new ToolStripMenuItem("Save", null, SaveFile_Click);
-            ToolStripMenuItem refreshMenuItem = new ToolStripMenuItem("Refresh Dashboard", null, RefreshDashboard);
-            ToolStripMenuItem exitMenuItem = new ToolStripMenuItem("Exit", null, (s, e) => this.Close());
-            fileMenu.DropDownItems.AddRange(new ToolStripItem[] { openMenuItem, saveMenuItem, refreshMenuItem, new ToolStripSeparator(), exitMenuItem });
+            // 2. Main content area
+            mainContentPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = panelColor,
+                Padding = new Padding(20)
+            };
             
-            // Household menu
-            ToolStripMenuItem householdMenu = new ToolStripMenuItem("Households");
-            householdMenu.ForeColor = Color.White;
-            ToolStripMenuItem listHouseholdsMenuItem = new ToolStripMenuItem("List All Households", null, ListHouseholds_Click);
-            ToolStripMenuItem addHouseholdMenuItem = new ToolStripMenuItem("Add New Household", null, AddHousehold_Click);
-            ToolStripMenuItem removeHouseholdMenuItem = new ToolStripMenuItem("Remove Household", null, RemoveHousehold_Click);
-            householdMenu.DropDownItems.AddRange(new ToolStripItem[] { listHouseholdsMenuItem, addHouseholdMenuItem, removeHouseholdMenuItem });
+            // App title in sidebar
+            applicationTitle = new Label
+            {
+                Text = "Neighborhood Manager",
+                ForeColor = textColor,
+                Font = new Font("Segoe UI Semibold", 14, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Dock = DockStyle.Top,
+                Height = 80,
+                Padding = new Padding(0, 20, 0, 20)
+            };
             
-            // People menu
-            ToolStripMenuItem peopleMenu = new ToolStripMenuItem("People");
-            peopleMenu.ForeColor = Color.White;
-            ToolStripMenuItem findPersonMenuItem = new ToolStripMenuItem("Find Person", null, FindPerson_Click);
-            ToolStripMenuItem addPersonMenuItem = new ToolStripMenuItem("Add Person", null, AddPerson_Click);
-            ToolStripMenuItem sortByAgeMenuItem = new ToolStripMenuItem("Sort by Age", null, SortByAge_Click);
-            peopleMenu.DropDownItems.AddRange(new ToolStripItem[] { findPersonMenuItem, addPersonMenuItem, sortByAgeMenuItem });
+            // Navigation indicator panel
+            navIndicator = new Panel
+            {
+                Width = 4,
+                Height = 45,
+                BackColor = highlightColor,
+                Location = new Point(0, 0),
+                Visible = false
+            };
             
-            // Reports menu
-            ToolStripMenuItem reportsMenu = new ToolStripMenuItem("Reports");
-            reportsMenu.ForeColor = Color.White;
-            ToolStripMenuItem statisticsMenuItem = new ToolStripMenuItem("Neighborhood Statistics", null, Statistics_Click);
-            ToolStripMenuItem mostFewestMembersMenuItem = new ToolStripMenuItem("Households with Most/Fewest Members", null, MostFewestMembers_Click);
-            reportsMenu.DropDownItems.AddRange(new ToolStripItem[] { statisticsMenuItem, mostFewestMembersMenuItem });
+            // Create menu panel for sidebar navigation
+            menuPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                Padding = new Padding(10, 30, 10, 0),
+                AutoScroll = true
+            };
             
-            // Help menu
-            ToolStripMenuItem helpMenu = new ToolStripMenuItem("Help");
-            helpMenu.ForeColor = Color.White;
-            ToolStripMenuItem aboutMenuItem = new ToolStripMenuItem("About", null, About_Click);
-            helpMenu.DropDownItems.AddRange(new ToolStripItem[] { aboutMenuItem });
+            // Create navigation buttons
+            dashboardButton = CreateMenuButton("Dashboard", IconChar.ChartPie);
+            householdsButton = CreateMenuButton("Households", IconChar.HouseChimney);
+            peopleButton = CreateMenuButton("People", IconChar.UserGroup);
+            reportsButton = CreateMenuButton("Reports", IconChar.FileAlt);
+            settingsButton = CreateMenuButton("Settings", IconChar.Gear);
             
-            // Add all menus to the menu strip
-            mainMenu.Items.AddRange(new ToolStripItem[] { fileMenu, householdMenu, peopleMenu, reportsMenu, helpMenu });
+            // Add click handlers to menu buttons
+            dashboardButton.Click += (s, e) => ActivateButton(s as IconButton, "Dashboard");
+            householdsButton.Click += (s, e) => ActivateButton(s as IconButton, "Households");
+            peopleButton.Click += (s, e) => ActivateButton(s as IconButton, "People");
+            reportsButton.Click += (s, e) => ActivateButton(s as IconButton, "Reports");
+            settingsButton.Click += (s, e) => ActivateButton(s as IconButton, "Settings");
             
-            // Add menu to form
-            this.Controls.Add(mainMenu);
+            // Add buttons to the menu panel
+            menuPanel.Controls.Add(dashboardButton);
+            menuPanel.Controls.Add(householdsButton);
+            menuPanel.Controls.Add(peopleButton);
+            menuPanel.Controls.Add(reportsButton);
+            menuPanel.Controls.Add(settingsButton);
+            
+            // Add components to the sidebar
+            sidebarPanel.Controls.Add(menuPanel);
+            sidebarPanel.Controls.Add(applicationTitle);
+            sidebarPanel.Controls.Add(navIndicator);
+            
+            // Create the header panel for the main content area
+            headerPanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 60,
+                BackColor = Color.White,
+                Padding = new Padding(20, 0, 0, 0)
+            };
+            
+            // Add a shadow to the header
+            headerPanel.Paint += (sender, e) => {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                Rectangle rect = new Rectangle(0, headerPanel.Height - 2, headerPanel.Width, 2);
+                using (LinearGradientBrush brush = new LinearGradientBrush(
+                    new Point(0, rect.Y), new Point(0, rect.Bottom),
+                    Color.FromArgb(40, 0, 0, 0), Color.Transparent))
+                {
+                    e.Graphics.FillRectangle(brush, rect);
+                }
+            };
+            
+            // Create a title for the current section in the header
+            Label headerTitle = new Label
+            {
+                Text = "Dashboard",
+                Font = new Font("Segoe UI Semibold", 16, FontStyle.Bold),
+                ForeColor = primaryColor,
+                TextAlign = ContentAlignment.MiddleLeft,
+                AutoSize = true,
+                Location = new Point(20, 15)
+            };
+            
+            // Add a refresh button to the header
+            IconButton refreshButton = new IconButton
+            {
+                IconChar = IconChar.SyncAlt,
+                IconColor = primaryColor,
+                IconSize = 18,
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(40, 40),
+                Location = new Point(headerPanel.Width - 60, 10),
+                Anchor = AnchorStyles.Right | AnchorStyles.Top,
+                Text = ""
+            };
+            refreshButton.FlatAppearance.BorderSize = 0;
+            refreshButton.Click += RefreshDashboard;
+            
+            headerPanel.Controls.Add(headerTitle);
+            headerPanel.Controls.Add(refreshButton);
+            
+            // Initialize main content panels for each section
+            InitializeDashboardPanel();
+            InitializeHouseholdsPanel();
+            
+            // Add the main structural panels to the form
+            mainContentPanel.Controls.Add(dashboardPanel);
+            mainContentPanel.Controls.Add(householdListPanel);
+            mainContentPanel.Controls.Add(headerPanel);
+            
+            this.Controls.Add(mainContentPanel);
+            this.Controls.Add(sidebarPanel);
             
             // Create status strip
             statusStrip = new StatusStrip();
-            statusStrip.BackColor = Color.FromArgb(30, 30, 65);
-            statusStrip.ForeColor = Color.White;
+            statusStrip.BackColor = secondaryColor;
+            statusStrip.ForeColor = textColor;
             statusLabel = new ToolStripStatusLabel("Ready");
-            statusLabel.ForeColor = Color.White;
+            statusLabel.ForeColor = textColor;
             statusStrip.Items.Add(statusLabel);
             this.Controls.Add(statusStrip);
+            
+            // Activate Dashboard by default
+            ActivateButton(dashboardButton, "Dashboard");
             
             // Create main dashboard panel
             dashboardPanel = new Panel
@@ -538,6 +633,118 @@ namespace KhuPhoManager.Views.Forms
             }
         }
         
+        /// <summary>
+        /// Creates a navigation menu button for the sidebar
+        /// </summary>
+        private IconButton CreateMenuButton(string text, IconChar icon)
+        {
+            var button = new IconButton
+            {
+                Text = text,
+                IconChar = icon,
+                FlatStyle = FlatStyle.Flat,
+                ForeColor = textColor,
+                IconColor = textColor,
+                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
+                IconSize = 24,
+                ImageAlign = ContentAlignment.MiddleLeft,
+                TextAlign = ContentAlignment.MiddleLeft,
+                TextImageRelation = TextImageRelation.ImageBeforeText,
+                Padding = new Padding(10, 0, 0, 0),
+                Margin = new Padding(5, 5, 5, 5),
+                Size = new Size(230, 45),
+                Cursor = Cursors.Hand
+            };
+            
+            button.FlatAppearance.BorderSize = 0;
+            button.FlatAppearance.MouseOverBackColor = primaryColor;
+            button.FlatAppearance.MouseDownBackColor = primaryColor;
+            
+            return button;
+        }
+        
+        /// <summary>
+        /// Activates a sidebar button and shows its corresponding panel
+        /// </summary>
+        private void ActivateButton(IconButton button, string panelName)
+        {
+            if (button == null) return;
+            
+            // Deactivate current button if exists
+            if (activeButton != null)
+            {
+                activeButton.BackColor = secondaryColor;
+                activeButton.ForeColor = textColor;
+                activeButton.IconColor = textColor;
+                activeButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
+            }
+            
+            // Activate new button
+            button.BackColor = primaryColor;
+            button.ForeColor = highlightColor;
+            button.IconColor = highlightColor;
+            button.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            activeButton = button;
+            
+            // Show active indicator
+            navIndicator.Height = button.Height;
+            navIndicator.Top = button.Top;
+            navIndicator.Left = 0;
+            navIndicator.Visible = true;
+            
+            // Show the corresponding panel
+            ShowPanel(panelName);
+        }
+        
+        /// <summary>
+        /// Shows the panel corresponding to the active button
+        /// </summary>
+        private void ShowPanel(string panelName)
+        {
+            // Hide all panels first
+            if (dashboardPanel != null) dashboardPanel.Visible = false;
+            if (householdListPanel != null) householdListPanel.Visible = false;
+            if (actionPanel != null) actionPanel.Visible = false;
+            
+            // Show the selected panel
+            switch (panelName)
+            {
+                case "Dashboard":
+                    if (dashboardPanel == null)
+                    {
+                        InitializeDashboardPanel();
+                        mainContentPanel.Controls.Add(dashboardPanel);
+                    }
+                    dashboardPanel.Visible = true;
+                    activePanel = dashboardPanel;
+                    RefreshDashboard(null, null);
+                    break;
+                    
+                case "Households":
+                    if (householdListPanel == null)
+                    {
+                        InitializeHouseholdsPanel();
+                        mainContentPanel.Controls.Add(householdListPanel);
+                    }
+                    householdListPanel.Visible = true;
+                    activePanel = householdListPanel;
+                    RefreshHouseholdList();
+                    break;
+                    
+                case "People":
+                    if (actionPanel == null)
+                    {
+                        InitializePeoplePanel();
+                        mainContentPanel.Controls.Add(actionPanel);
+                    }
+                    actionPanel.Visible = true;
+                    activePanel = actionPanel;
+                    break;
+                
+                // Add more cases for other panels
+            }
+        }
+        
         private void SortByAge_Click(object sender, EventArgs e)
         {
             SortByAgeForm sortByAgeForm = new SortByAgeForm(_controller);
@@ -657,45 +864,75 @@ namespace KhuPhoManager.Views.Forms
         }
         
         /// <summary>
-        /// Creates a statistics box on the statistics panel
+        /// Creates a beautiful statistics box on the statistics panel
         /// </summary>
         private void CreateStatBox(string title, string value, Point location, Color color)
         {
             Panel statBox = new Panel
             {
-                Width = 160,
-                Height = 80,
+                Width = 200,
+                Height = 100,
                 Location = location,
                 BackColor = Color.White
             };
             
-            // Add rounded corners to the stat box
+            // Add shadow and rounded corners to the stat box
             statBox.Paint += (sender, e) => {
-                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                using (var path = new System.Drawing.Drawing2D.GraphicsPath())
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                
+                // Create rounded rectangle path
+                using (var path = new GraphicsPath())
                 {
-                    int radius = 5;
-                    path.AddArc(0, 0, radius, radius, 180, 90);
-                    path.AddArc(statBox.Width - radius - 1, 0, radius, radius, 270, 90);
-                    path.AddArc(statBox.Width - radius - 1, statBox.Height - radius - 1, radius, radius, 0, 90);
-                    path.AddArc(0, statBox.Height - radius - 1, radius, radius, 90, 90);
+                    int radius = 10;
+                    Rectangle rect = new Rectangle(0, 0, statBox.Width - 1, statBox.Height - 1);
+                    path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
+                    path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
+                    path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+                    path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
                     path.CloseAllFigures();
                     
-                    // Draw left border with color
-                    e.Graphics.FillRectangle(new SolidBrush(color), new Rectangle(0, 5, 5, statBox.Height - 10));
-                    e.Graphics.FillPath(new SolidBrush(Color.White), path);
+                    // Create gradient background
+                    using (LinearGradientBrush brush = new LinearGradientBrush(
+                        new Point(0, 0), new Point(statBox.Width, statBox.Height),
+                        Color.White, Color.FromArgb(10, color)))
+                    {
+                        e.Graphics.FillPath(brush, path);
+                    }
+                    
+                    // Draw a thin border
+                    using (Pen pen = new Pen(Color.FromArgb(30, color), 1))
+                    {
+                        e.Graphics.DrawPath(pen, path);
+                    }
+                    
+                    // Add a colored indicator on top
+                    using (SolidBrush brush = new SolidBrush(color))
+                    {
+                        e.Graphics.FillRectangle(brush, new Rectangle(0, 0, statBox.Width, 4));
+                    }
                 }
+            };
+            
+            // Icon
+            IconPictureBox iconBox = new IconPictureBox
+            {
+                IconChar = GetIconForStat(title),
+                IconSize = 32,
+                IconColor = color,
+                BackColor = Color.Transparent,
+                Size = new Size(40, 40),
+                Location = new Point(15, 15)
             };
             
             // Value label
             Label valueLabel = new Label
             {
                 Text = value,
-                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 20, FontStyle.Bold),
                 ForeColor = color,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Location = new Point(10, 5),
-                Size = new Size(140, 40),
+                TextAlign = ContentAlignment.MiddleRight,
+                Location = new Point(60, 15),
+                Size = new Size(125, 40),
                 AutoSize = false
             };
             
@@ -703,17 +940,32 @@ namespace KhuPhoManager.Views.Forms
             Label titleLabel = new Label
             {
                 Text = title,
-                Font = new Font("Segoe UI", 8),
+                Font = new Font("Segoe UI", 9, FontStyle.Regular),
                 ForeColor = Color.Gray,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Location = new Point(10, 50),
-                Size = new Size(140, 20),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Location = new Point(15, 65),
+                Size = new Size(170, 20),
                 AutoSize = false
             };
             
+            statBox.Controls.Add(iconBox);
             statBox.Controls.Add(valueLabel);
             statBox.Controls.Add(titleLabel);
             statisticsPanel.Controls.Add(statBox);
+        }
+        
+        /// <summary>
+        /// Returns an appropriate icon for the stat box based on its title
+        /// </summary>
+        private IconChar GetIconForStat(string title)
+        {
+            if (title.Contains("Household")) return IconChar.Home;
+            if (title.Contains("Population")) return IconChar.Users;
+            if (title.Contains("Adult")) return IconChar.UserTie;
+            if (title.Contains("Children")) return IconChar.Child;
+            if (title.Contains("Avg")) return IconChar.ChartLine;
+            
+            return IconChar.InfoCircle;
         }
         
         /// <summary>
@@ -739,6 +991,180 @@ namespace KhuPhoManager.Views.Forms
                 // Refresh the dashboard after viewing details in case changes were made
                 RefreshDashboard(sender, e);
             }
+        }
+        
+        /// <summary>
+        /// Initialize the People panel with filtering and search options
+        /// </summary>
+        private void InitializePeoplePanel()
+        {
+            // Create people panel if it doesn't exist or recreate it
+            if (actionPanel == null)
+            {
+                actionPanel = new Panel
+                {
+                    Dock = DockStyle.Fill,
+                    Visible = false,
+                    Padding = new Padding(15, 15, 15, 15),
+                    BackColor = panelColor
+                };
+                
+                // Add components and functionality as needed similar to the other panels
+                Panel contentPanel = new Panel
+                {
+                    Dock = DockStyle.Fill,
+                    BackColor = Color.White
+                };
+                
+                // Add rounded corners to content panel
+                contentPanel.Paint += (sender, e) => {
+                    e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                    using (var path = new GraphicsPath())
+                    {
+                        int radius = 10;
+                        Rectangle rect = new Rectangle(0, 0, contentPanel.Width - 1, contentPanel.Height - 1);
+                        path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
+                        path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
+                        path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+                        path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+                        path.CloseAllFigures();
+                        
+                        e.Graphics.FillPath(new SolidBrush(Color.White), path);
+                        
+                        // Add a subtle shadow
+                        using (Pen pen = new Pen(Color.FromArgb(20, 0, 0, 0), 1))
+                        {
+                            e.Graphics.DrawPath(pen, path);
+                        }
+                    }
+                };
+                
+                Label peopleTitle = new Label
+                {
+                    Text = "People Management",
+                    Font = new Font("Segoe UI Semibold", 12, FontStyle.Bold),
+                    ForeColor = primaryColor,
+                    Dock = DockStyle.Top,
+                    Height = 40,
+                    Padding = new Padding(15, 15, 0, 0)
+                };
+                
+                // Create a FlowLayoutPanel for the people management functions
+                FlowLayoutPanel peopleActionsPanel = new FlowLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    FlowDirection = FlowDirection.TopDown,
+                    WrapContents = false,
+                    Padding = new Padding(20, 20, 20, 20),
+                    AutoScroll = true
+                };
+                
+                // Create action cards for people management
+                AddActionCard(peopleActionsPanel, "Find Person", "Search for a person by ID or name", IconChar.Search, FindPerson_Click);
+                AddActionCard(peopleActionsPanel, "Add Person", "Add a new person to a household", IconChar.UserPlus, AddPerson_Click);
+                AddActionCard(peopleActionsPanel, "Sort by Age", "View all people sorted by age", IconChar.SortAmountDown, SortByAge_Click);
+                
+                contentPanel.Controls.Add(peopleActionsPanel);
+                contentPanel.Controls.Add(peopleTitle);
+                
+                actionPanel.Controls.Add(contentPanel);
+            }
+        }
+        
+        /// <summary>
+        /// Helper method to create action cards for the people panel
+        /// </summary>
+        private void AddActionCard(FlowLayoutPanel parent, string title, string description, IconChar icon, EventHandler clickHandler)
+        {
+            Panel card = new Panel
+            {
+                Width = parent.Width - 50,
+                Height = 100,
+                Margin = new Padding(0, 0, 0, 15),
+                BackColor = Color.White,
+                Cursor = Cursors.Hand
+            };
+            
+            // Add shadow and hover effect
+            card.Paint += (sender, e) => {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var path = new GraphicsPath())
+                {
+                    int radius = 10;
+                    Rectangle rect = new Rectangle(0, 0, card.Width - 1, card.Height - 1);
+                    path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
+                    path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
+                    path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+                    path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+                    path.CloseAllFigures();
+                    
+                    // Draw shadow
+                    using (var shadowPath = (GraphicsPath)path.Clone())
+                    {
+                        using (var shadowBrush = new SolidBrush(Color.FromArgb(20, 0, 0, 0)))
+                        {
+                            e.Graphics.TranslateTransform(2, 2);
+                            e.Graphics.FillPath(shadowBrush, shadowPath);
+                            e.Graphics.ResetTransform();
+                        }
+                    }
+                    
+                    e.Graphics.FillPath(new SolidBrush(Color.White), path);
+                    
+                    // Add a color indicator on the left side
+                    using (var leftBar = new SolidBrush(primaryColor))
+                    {
+                        e.Graphics.FillRectangle(leftBar, new Rectangle(0, 0, 5, card.Height));
+                    }
+                }
+            };
+            
+            // Add icon
+            IconPictureBox iconBox = new IconPictureBox
+            {
+                IconChar = icon,
+                IconSize = 40,
+                IconColor = primaryColor,
+                BackColor = Color.Transparent,
+                Size = new Size(50, 50),
+                Location = new Point(20, 25)
+            };
+            
+            // Add title
+            Label titleLabel = new Label
+            {
+                Text = title,
+                Font = new Font("Segoe UI Semibold", 12, FontStyle.Bold),
+                ForeColor = primaryColor,
+                Location = new Point(80, 20),
+                AutoSize = true
+            };
+            
+            // Add description
+            Label descLabel = new Label
+            {
+                Text = description,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Color.Gray,
+                Location = new Point(80, 50),
+                Size = new Size(300, 30),
+                AutoSize = false
+            };
+            
+            // Add controls to card
+            card.Controls.Add(iconBox);
+            card.Controls.Add(titleLabel);
+            card.Controls.Add(descLabel);
+            
+            // Add click handler
+            card.Click += clickHandler;
+            // Make sure all child controls pass clicks to parent
+            foreach (Control control in card.Controls)
+            {
+                control.Click += clickHandler;
+            }
+            
+            parent.Controls.Add(card);
         }
     }
 }
