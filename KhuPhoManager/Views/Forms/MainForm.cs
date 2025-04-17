@@ -459,8 +459,44 @@ namespace KhuPhoManager.Views.Forms
         
         private void MainForm_Load(object sender, EventArgs e)
         {
-            // Initialize the dashboard on form load
-            RefreshDashboard(sender, e);
+            statusLabel.Text = "Loading neighborhood data...";
+            
+            try
+            {
+                // Initialize all panels if needed
+                if (dashboardPanel == null) InitializeDashboardPanel();
+                if (householdListPanel == null) InitializeHouseholdsPanel();
+                if (actionPanel == null) InitializePeoplePanel();
+                
+                // Make sure all panels are added to the main content area
+                if (!mainContentPanel.Controls.Contains(dashboardPanel))
+                    mainContentPanel.Controls.Add(dashboardPanel);
+                if (!mainContentPanel.Controls.Contains(householdListPanel))
+                    mainContentPanel.Controls.Add(householdListPanel);
+                if (!mainContentPanel.Controls.Contains(actionPanel))
+                    mainContentPanel.Controls.Add(actionPanel);
+                    
+                // Create refresh timer if not already created
+                if (refreshTimer == null)
+                {
+                    refreshTimer = new System.Windows.Forms.Timer();
+                    refreshTimer.Interval = 60000; // Refresh every minute
+                    refreshTimer.Tick += RefreshDashboard;
+                    refreshTimer.Start();
+                }
+                
+                // Set the dashboard as the active panel by default
+                ActivateButton(dashboardButton, "Dashboard");
+                
+                // Update status
+                statusLabel.Text = "Ready";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error initializing application: {ex.Message}", "Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                statusLabel.Text = $"Error: {ex.Message}";
+            }
         }
         
         private void OpenFile_Click(object sender, EventArgs e)
