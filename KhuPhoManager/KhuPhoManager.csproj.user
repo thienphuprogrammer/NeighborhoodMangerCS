@@ -41,5 +41,20 @@
     <Compile Update="Views\Forms\SortByAgeForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="Views\UserControls\DashboardPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Views\UserControls\HouseholdsPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Views\UserControls\PeoplePanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Views\UserControls\ReportsPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Views\UserControls\SettingsPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
   </ItemGroup>
 </Project>

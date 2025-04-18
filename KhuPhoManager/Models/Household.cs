@@ -9,10 +9,20 @@ namespace KhuPhoManager.Models
     /// </summary>
     public class Household
     {
+        private int _houseNumber;
         /// <summary>
         /// Gets or sets the house number
         /// </summary>
-        public int HouseNumber { get; set; }
+        public int HouseNumber 
+        { 
+            get => _houseNumber; 
+            set 
+            { 
+                if (value <= 0)
+                    throw new ArgumentException("House number must be a positive integer", nameof(value));
+                _houseNumber = value; 
+            } 
+        }
 
         /// <summary>
         /// Gets or sets the address of the household
@@ -54,8 +64,17 @@ namespace KhuPhoManager.Models
         /// Adds a person to the household
         /// </summary>
         /// <param name="person">The person to add</param>
+        /// <exception cref="ArgumentNullException">Thrown when person is null</exception>
+        /// <exception cref="InvalidOperationException">Thrown when a person with the same ID already exists</exception>
         public void AddMember(IPerson person)
         {
+            if (person == null)
+                throw new ArgumentNullException(nameof(person));
+                
+            // Check if a person with the same ID already exists
+            if (_members.Any(m => m.IdNumber == person.IdNumber))
+                throw new InvalidOperationException($"A person with ID {person.IdNumber} already exists in this household.");
+                
             _members.Add(person);
         }
 
@@ -74,8 +93,12 @@ namespace KhuPhoManager.Models
         /// </summary>
         /// <param name="id">The ID number of the person to remove</param>
         /// <returns>True if the person was found and removed, false otherwise</returns>
+        /// <exception cref="ArgumentNullException">Thrown when id is null or empty</exception>
         public bool RemoveMemberById(string id)
         {
+            if (string.IsNullOrEmpty(id))
+                throw new ArgumentNullException(nameof(id), "ID cannot be null or empty");
+                
             IPerson personToRemove = _members.FirstOrDefault(p => p.IdNumber == id);
             if (personToRemove != null)
             {
@@ -90,9 +113,49 @@ namespace KhuPhoManager.Models
         /// </summary>
         /// <param name="id">The ID number to search for</param>
         /// <returns>The person with the matching ID, or null if not found</returns>
+        /// <exception cref="ArgumentNullException">Thrown when id is null or empty</exception>
         public IPerson FindMemberById(string id)
         {
+            if (string.IsNullOrEmpty(id))
+                throw new ArgumentNullException(nameof(id), "ID cannot be null or empty");
+                
             return _members.FirstOrDefault(p => p.IdNumber == id);
+        }
+        
+        /// <summary>
+        /// Gets the average age of all members in the household
+        /// </summary>
+        /// <returns>The average age, or 0 if there are no members</returns>
+        public double GetAverageAge()
+        {
+            if (_members.Count == 0)
+                return 0;
+                
+            return _members.Average(m => m.Age);
+        }
+        
+        /// <summary>
+        /// Gets the oldest member in the household
+        /// </summary>
+        /// <returns>The oldest person, or null if there are no members</returns>
+        public IPerson GetOldestMember()
+        {
+            if (_members.Count == 0)
+                return null;
+                
+            return _members.OrderByDescending(m => m.Age).First();
+        }
+        
+        /// <summary>
+        /// Gets the youngest member in the household
+        /// </summary>
+        /// <returns>The youngest person, or null if there are no members</returns>
+        public IPerson GetYoungestMember()
+        {
+            if (_members.Count == 0)
+                return null;
+                
+            return _members.OrderBy(m => m.Age).First();
         }
     }
 }

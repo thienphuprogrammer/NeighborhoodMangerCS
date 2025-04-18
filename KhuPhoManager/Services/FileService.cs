@@ -32,19 +32,20 @@ namespace KhuPhoManager.Services
                 foreach (string line in lines)
                 {
                     string[] parts = line.Split(',');
-                    if (parts.Length < 5) continue; // Skip invalid lines
+                    if (parts.Length < 6) continue; // Skip invalid lines
 
                     int houseNumber = int.Parse(parts[0]);
-                    string personType = parts[1];
-                    string fullName = parts[2];
-                    int age = int.Parse(parts[3]);
-                    string idOrClass = parts[4];
-                    string idNumber = parts.Length > 5 ? parts[5] : string.Empty;
+                    string address = parts[1];
+                    string personType = parts[2];
+                    string fullName = parts[3];
+                    int age = int.Parse(parts[4]);
+                    string idOrClass = parts[5];
+                    string idNumber = parts.Length > 6 ? parts[6] : string.Empty;
 
                     // Create or get household
                     if (!householdMap.TryGetValue(houseNumber, out Household household))
                     {
-                        household = new Household(houseNumber);
+                        household = new Household(houseNumber, address);
                         householdMap[houseNumber] = household;
                         
                         try
@@ -110,11 +111,11 @@ namespace KhuPhoManager.Services
                             string line;
                             if (person is Adult adult)
                             {
-                                line = $"{household.HouseNumber},Adult,{adult.FullName},{adult.Age},{adult.Occupation},{adult.IdNumber}";
+                                line = $"{household.HouseNumber},{household.Address},Adult,{adult.FullName},{adult.Age},{adult.Occupation},{adult.IdNumber}";
                             }
                             else if (person is Child child)
                             {
-                                line = $"{household.HouseNumber},Child,{child.FullName},{child.Age},{child.SchoolClass},{child.BirthCertificateNumber}";
+                                line = $"{household.HouseNumber},{household.Address},Child,{child.FullName},{child.Age},{child.SchoolClass},{child.BirthCertificateNumber}";
                             }
                             else
                             {

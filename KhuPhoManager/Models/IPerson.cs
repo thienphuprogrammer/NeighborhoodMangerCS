@@ -8,6 +8,11 @@ namespace KhuPhoManager.Models
     public interface IPerson
     {
         /// <summary>
+        /// Gets or sets the person's unique identifier
+        /// </summary>
+        string Id { get; set; }
+        
+        /// <summary>
         /// Gets or sets the person's full name
         /// </summary>
         string FullName { get; set; }

@@ -32,6 +32,16 @@ namespace KhuPhoManager.Controllers
         }
 
         /// <summary>
+        /// Gets a household by its house number
+        /// </summary>
+        /// <param name="houseNumber">The house number to look for</param>
+        /// <returns>The household with the specified house number, or null if not found</returns>
+        public Household GetHouseholdByNumber(int houseNumber)
+        {
+            return _neighborhood.GetHouseholdByNumber(houseNumber);
+        }
+
+        /// <summary>
         /// Gets the count of households in the neighborhood
         /// </summary>
         /// <returns>Number of households</returns>
