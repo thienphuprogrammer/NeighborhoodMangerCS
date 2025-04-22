@@ -53,71 +53,10 @@ namespace KhuPhoManager.Views.UserControls
             statisticsPanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 120,
+                Height = 160,
                 Padding = new Padding(0, 10, 0, 10),
                 Margin = new Padding(0, 0, 0, 15)
             };
-
-            
-
-            // Quick Stats panel
-            Panel quickStatsPanel = new Panel
-            {
-                Dock = DockStyle.Top,
-                Height = 100,
-                Padding = new Padding(0, 0, 0, 10),
-                Margin = new Padding(0, 0, 0, 15)
-            };
-
-            // Quick Stats title
-            Label quickStatsTitle = new Label
-            {
-                Text = "Quick Statistics",
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = UIHelper.PrimaryColor,
-                Dock = DockStyle.Top,
-                Height = 30
-            };
-
-            // Quick Stats content panel
-            Panel quickStatsContent = new Panel
-            {
-                Dock = DockStyle.Fill
-            };
-
-            // Create quick stat labels
-            Label totalHouseholdsLabel = new Label
-            {
-                Text = $"Total Households: {_controller.GetHouseholdCount()}",
-                Font = new Font("Segoe UI", 10),
-                Location = new Point(10, 10),
-                AutoSize = true
-            };
-
-            Label totalPopulationLabel = new Label
-            {
-                Text = $"Total Population: {_controller.GetTotalPopulation()}",
-                Font = new Font("Segoe UI", 10),
-                Location = new Point(10, 35),
-                AutoSize = true
-            };
-
-            Label adultsChildrenLabel = new Label
-            {
-                Text = $"Adults: {_controller.GetTotalAdults()} | Children: {_controller.GetTotalChildren()}",
-                Font = new Font("Segoe UI", 10),
-                Location = new Point(10, 60),
-                AutoSize = true
-            };
-
-            // Add labels to quick stats content panel
-            quickStatsContent.Controls.Add(totalHouseholdsLabel);
-            quickStatsContent.Controls.Add(totalPopulationLabel);
-            quickStatsContent.Controls.Add(adultsChildrenLabel);
-
-            // Add controls to quick stats panel
-            quickStatsPanel.Controls.Add(quickStatsContent);
-            quickStatsPanel.Controls.Add(quickStatsTitle);
 
             // Recent Households panel
             Panel recentHouseholdsPanel = new Panel
@@ -187,7 +126,6 @@ namespace KhuPhoManager.Views.UserControls
 
             // Add controls to dashboard panel
             this.Controls.Add(recentHouseholdsPanel);
-            this.Controls.Add(quickStatsPanel);
             this.Controls.Add(statisticsPanel);
             this.Controls.Add(dashboardTitle);
 

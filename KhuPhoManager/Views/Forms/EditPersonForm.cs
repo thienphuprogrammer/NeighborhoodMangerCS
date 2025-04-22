@@ -272,7 +272,7 @@ namespace KhuPhoManager.Views.Forms
                 }
 
                 // Update person in the household
-                bool success = _controller.EditPersonInformation(_householdNumber, _originalPerson.IdNumber, updatedPerson);
+                bool success = _controller.EditPersonInformation(_householdNumber, _originalPerson.Id, updatedPerson);
                 
                 if (success)
                 {

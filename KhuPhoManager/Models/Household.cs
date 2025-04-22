@@ -72,8 +72,8 @@ namespace KhuPhoManager.Models
                 throw new ArgumentNullException(nameof(person));
                 
             // Check if a person with the same ID already exists
-            if (_members.Any(m => m.IdNumber == person.IdNumber))
-                throw new InvalidOperationException($"A person with ID {person.IdNumber} already exists in this household.");
+            if (_members.Any(m => m.Id == person.Id))
+                throw new InvalidOperationException($"A person with ID {person.Id} already exists in this household.");
                 
             _members.Add(person);
         }
@@ -99,7 +99,7 @@ namespace KhuPhoManager.Models
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentNullException(nameof(id), "ID cannot be null or empty");
                 
-            IPerson personToRemove = _members.FirstOrDefault(p => p.IdNumber == id);
+            IPerson personToRemove = _members.FirstOrDefault(p => p.Id == id);
             if (personToRemove != null)
             {
                 _members.Remove(personToRemove);
@@ -119,7 +119,7 @@ namespace KhuPhoManager.Models
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentNullException(nameof(id), "ID cannot be null or empty");
                 
-            return _members.FirstOrDefault(p => p.IdNumber == id);
+            return _members.FirstOrDefault(p => p.Id == id);
         }
         
         /// <summary>

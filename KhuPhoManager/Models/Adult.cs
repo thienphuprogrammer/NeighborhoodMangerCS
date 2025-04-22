@@ -159,6 +159,21 @@ namespace KhuPhoManager.Models
         }
 
         /// <summary>
+        /// Creates a new instance of the Adult class with the specified properties (with ID)
+        /// </summary>
+        /// <exception cref="ArgumentException">Thrown when any parameter is invalid</exception>
+        public Adult(string fullName, int age, string occupation, string id, DateTime dateOfBirth, string idNumber)
+        {
+            // These property setters will validate the input
+            Id = id;
+            FullName = fullName;
+            Age = age;
+            Occupation = occupation;
+            IdNumber = idNumber;
+            DateOfBirth = dateOfBirth;
+        }
+
+        /// <summary>
         /// Returns a string representation of the adult
         /// </summary>
         /// <returns>A string containing the adult's details</returns>

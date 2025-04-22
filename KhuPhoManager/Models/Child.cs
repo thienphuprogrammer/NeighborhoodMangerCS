@@ -13,7 +13,6 @@ namespace KhuPhoManager.Models
         private string _schoolClass;
         private string _school;
         private int _grade;
-        private string _idNumber;
         private string _birthCertificateNumber;
         private DateTime _dateOfBirth;
         
@@ -74,20 +73,6 @@ namespace KhuPhoManager.Models
         /// Gets or sets the child's occupation (always "Student")
         /// </summary>
         public string Occupation { get => "Student"; set { /* Not used */ } }
-        
-        /// <summary>
-        /// Gets or sets the child's ID (maps to birth certificate number)
-        /// </summary>
-        public string IdNumber 
-        { 
-            get => _idNumber; 
-            set 
-            { 
-                if (string.IsNullOrWhiteSpace(value))
-                    throw new ArgumentException("ID number cannot be empty", nameof(value));
-                _idNumber = value; 
-            } 
-        }
         
         /// <summary>
         /// Gets or sets the child's unique identifier
@@ -162,7 +147,7 @@ namespace KhuPhoManager.Models
         /// Creates a new instance of the Child class with school and grade information
         /// </summary>
         /// <exception cref="ArgumentException">Thrown when any parameter is invalid</exception>
-        public Child(string fullName, int age, string school, int grade, DateTime dateOfBirth)
+        public Child(string fullName, int age, string school, int grade, DateTime dateOfBirth, string birthCertificateNumber)
         {
             // These property setters will validate the input
             Id = Guid.NewGuid().ToString();
@@ -171,22 +156,23 @@ namespace KhuPhoManager.Models
             School = school;
             Grade = grade;
             SchoolClass = $"Grade {grade}";
+            BirthCertificateNumber = birthCertificateNumber;
             DateOfBirth = dateOfBirth;
         }
 
-        public Child(string fullName, int age, string idNumber, DateTime dateOfBirth, int grade, string school)
+        public Child(string fullName, int age, string school, int grade, DateTime dateOfBirth, string id, string birthCertificateNumber)
         {
             // These property setters will validate the input
-            Id = Guid.NewGuid().ToString();
+            Id = id;
             FullName = fullName;
             Age = age;
-            IdNumber = idNumber;
-            Grade = grade;
             School = school;
+            Grade = grade;
             SchoolClass = $"Grade {grade}";
             DateOfBirth = dateOfBirth;
+            BirthCertificateNumber = birthCertificateNumber;
         }
-        
+
         /// <summary>
         /// Returns a string representation of the child
         /// </summary>

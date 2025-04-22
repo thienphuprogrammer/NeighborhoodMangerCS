@@ -29,7 +29,7 @@ namespace KhuPhoManager.Views.Forms
         {
             // Main form settings
             this.Text = $"Household #{_household.HouseNumber} Details";
-            this.Size = new Size(900, 650);
+            this.Size = new Size(1000, 750);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -157,7 +157,7 @@ namespace KhuPhoManager.Views.Forms
             membersListView.Columns.Add("Age", 60);
             membersListView.Columns.Add("Occupation/School", 150);
             membersListView.Columns.Add("Grade", 60);
-            membersListView.Columns.Add("ID", 150);
+            membersListView.Columns.Add("Number ID/Birth Certificate Number", 150);
 
             // Add title for the members list
             Label membersTitle = new Label
@@ -305,7 +305,7 @@ namespace KhuPhoManager.Views.Forms
                 {
                     item.SubItems.Add(child.School);
                     item.SubItems.Add(child.Grade.ToString());
-                    item.SubItems.Add(child.IdNumber);
+                    item.SubItems.Add(child.BirthCertificateNumber);
                 }
                 
                 item.Tag = member;
@@ -348,7 +348,7 @@ namespace KhuPhoManager.Views.Forms
                 if (MessageBox.Show($"Are you sure you want to remove {person.FullName} from this household?", 
                     "Confirm Removal", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    if (_controller.RemovePersonFromHousehold(_household.HouseNumber, person.IdNumber))
+                    if (_controller.RemovePersonFromHousehold(_household.HouseNumber, person.Id))
                     {
                         MessageBox.Show("Person removed successfully.", "Success", 
                             MessageBoxButtons.OK, MessageBoxIcon.Information);

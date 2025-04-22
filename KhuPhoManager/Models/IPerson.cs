@@ -29,11 +29,6 @@ namespace KhuPhoManager.Models
         string Occupation { get; set; }
 
         /// <summary>  
-        /// Gets or sets the person's ID number (ID card or birth certificate)  
-        /// </summary>  
-        string IdNumber { get; set; }
-
-        /// <summary>  
         /// Gets the type of person (Adult or Child)  
         /// </summary>  
         string PersonType { get; }
