@@ -13,6 +13,7 @@ namespace KhuPhoManager.Views.UserControls
     /// </summary>
     public partial class PeoplePanel : UserControl
     {
+        private System.Collections.Generic.List<(IPerson person, int houseNumber, string address)> _allPeople = new System.Collections.Generic.List<(IPerson person, int houseNumber, string address)>();
         private readonly GuiNeighborhoodController _controller;
         private ListView peopleListView;
 
@@ -47,6 +48,10 @@ namespace KhuPhoManager.Views.UserControls
         /// <summary>
         /// Initialize the people panel components
         /// </summary>
+        private int _sortColumn = -1;
+        private SortOrder _sortOrder = SortOrder.None;
+        private string _personNameFilter = string.Empty;
+
         private void InitializeCustomComponents()
         {
             this.Dock = DockStyle.Fill;
@@ -125,6 +130,17 @@ namespace KhuPhoManager.Views.UserControls
             buttonPanel.Controls.Add(deleteButton);
 
             // Create ListView for people
+            // --- Search box for filtering by name ---
+            TextBox searchTextBox = new TextBox
+            {
+                PlaceholderText = "Find person by name...",
+                Dock = DockStyle.Top,
+                Margin = new Padding(0, 0, 0, 8),
+                Font = new Font("Segoe UI", 10)
+            };
+            searchTextBox.TextChanged += (s, e) => ApplyPeopleFilterAndSort();
+
+            // --- ListView for people ---
             peopleListView = new ListView
             {
                 Dock = DockStyle.Fill,
@@ -132,26 +148,127 @@ namespace KhuPhoManager.Views.UserControls
                 FullRowSelect = true,
                 GridLines = false,
                 BorderStyle = BorderStyle.FixedSingle,
-                Font = new Font("Segoe UI", 9)
+                Font = new Font("Segoe UI", 9),
+                Sorting = SortOrder.None
             };
-
             // Add columns to ListView
             peopleListView.Columns.Add("Name", 200);
+            peopleListView.Columns.Add("Birthday", 100);
             peopleListView.Columns.Add("Age", 50);
             peopleListView.Columns.Add("Type", 80);
             peopleListView.Columns.Add("House #", 70);
             peopleListView.Columns.Add("Address", 250);
-
+            // Sorting on column click
+            peopleListView.ColumnClick += PeopleListView_ColumnClick;
             // Show details when a person is selected
             peopleListView.ItemSelectionChanged += PeopleListView_ItemSelectionChanged;
 
             // Add controls to panel
             this.Controls.Add(peopleListView);
+            this.Controls.Add(searchTextBox);
             this.Controls.Add(buttonPanel);
             this.Controls.Add(peopleTitle);
 
             // Initial load
-            LoadPeopleList();
+            ApplyPeopleFilterAndSort();
+        }
+
+        /// <summary>
+        /// Handles sorting when a column header is clicked
+        /// </summary>
+        private void PeopleListView_ColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            if (_sortColumn == e.Column)
+            {
+                // Toggle sort order
+                _sortOrder = _sortOrder == SortOrder.Ascending ? SortOrder.Descending : SortOrder.Ascending;
+            }
+            else
+            {
+                _sortColumn = e.Column;
+                _sortOrder = SortOrder.Ascending;
+            }
+            ApplyPeopleFilterAndSort();
+        }
+
+        /// <summary>
+        /// Filter and sort people, then update the ListView
+        /// </summary>
+        public void ApplyPeopleFilterAndSort()
+        {
+            // Gather all people with household info
+            _allPeople = new System.Collections.Generic.List<(IPerson person, int houseNumber, string address)>();
+            var households = _controller.GetHouseholds();
+            foreach (var hh in households)
+            {
+                foreach (var p in hh.Members)
+                {
+                    _allPeople.Add((p, hh.HouseNumber, hh.Address));
+                }
+            }
+
+            // Filter
+            string filter = _personNameFilter = (this.Controls.OfType<TextBox>().FirstOrDefault(tb => tb.Dock == DockStyle.Top)?.Text ?? "").Trim().ToLower();
+            var filtered = string.IsNullOrEmpty(filter)
+                ? _allPeople
+                : _allPeople.Where(t => t.person.FullName.ToLower().Contains(filter)).ToList();
+
+            // Sort
+            if (_sortColumn >= 0)
+            {
+                switch (_sortColumn)
+                {
+                    case 0: // Name
+                        filtered = _sortOrder == SortOrder.Ascending ?
+                            filtered.OrderBy(t => t.person.FullName).ToList() :
+                            filtered.OrderByDescending(t => t.person.FullName).ToList();
+                        break;
+                    case 1: // Birthday
+                        filtered = _sortOrder == SortOrder.Ascending ?
+                            filtered.OrderBy(t => t.person.DateOfBirth).ToList() :
+                            filtered.OrderByDescending(t => t.person.DateOfBirth).ToList();
+                        break;
+                    case 2: // Age
+                        filtered = _sortOrder == SortOrder.Ascending ?
+                            filtered.OrderBy(t => t.person.Age).ToList() :
+                            filtered.OrderByDescending(t => t.person.Age).ToList();
+                        break;
+                    case 3: // Type
+                        filtered = _sortOrder == SortOrder.Ascending ?
+                            filtered.OrderBy(t => t.person.PersonType).ToList() :
+                            filtered.OrderByDescending(t => t.person.PersonType).ToList();
+                        break;
+                    case 4: // House #
+                        filtered = _sortOrder == SortOrder.Ascending ?
+                            filtered.OrderBy(t => t.houseNumber).ToList() :
+                            filtered.OrderByDescending(t => t.houseNumber).ToList();
+                        break;
+                    case 5: // Address
+                        filtered = _sortOrder == SortOrder.Ascending ?
+                            filtered.OrderBy(t => t.address).ToList() :
+                            filtered.OrderByDescending(t => t.address).ToList();
+                        break;
+                }
+            }
+
+            // Update ListView
+            peopleListView.BeginUpdate();
+            peopleListView.Items.Clear();
+            foreach (var tup in filtered)
+            {
+                var item = new ListViewItem(new[]
+                {
+                    tup.person.FullName,
+                    tup.person.DateOfBirth.ToString("M/d/yyyy"),
+                    tup.person.Age.ToString(),
+                    tup.person.PersonType,
+                    tup.houseNumber.ToString(),
+                    tup.address ?? ""
+                });
+                item.Tag = tup.person;
+                peopleListView.Items.Add(item);
+            }
+            peopleListView.EndUpdate();
         }
 
         /// <summary>
@@ -633,7 +750,7 @@ namespace KhuPhoManager.Views.UserControls
 
                 // Hide the edit panel and refresh the list
                 HideEditPanel();
-                LoadPeopleList();
+                ApplyPeopleFilterAndSort();
             }
             catch (Exception ex)
             {
@@ -869,7 +986,7 @@ namespace KhuPhoManager.Views.UserControls
 
                 // Remove the confirmation panel and refresh the list
                 Controls.Remove(confirmPanel);
-                LoadPeopleList();
+                ApplyPeopleFilterAndSort();
             };
 
             cancelDeleteButton.Click += (s, args) =>
@@ -889,45 +1006,6 @@ namespace KhuPhoManager.Views.UserControls
             confirmPanel.BringToFront();
         }
 
-        /// <summary>
-        /// Loads the people list with current data
-        /// </summary>
-        public void LoadPeopleList()
-        {
-            // Clear existing items
-            peopleListView.Items.Clear();
-
-            // Get households from controller
-            var households = _controller.GetHouseholds();
-
-            // Add each person to the list
-            foreach (var household in households)
-            {
-                foreach (var person in household.Members)
-                {
-                    AddPersonToListView(person, household);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Adds a person to the ListView
-        /// </summary>
-        private void AddPersonToListView(IPerson person, Household household)
-        {
-            ListViewItem item = new ListViewItem(person.FullName);
-            item.SubItems.Add(person.Age.ToString());
-            item.SubItems.Add(person.PersonType);
-            item.SubItems.Add(household.HouseNumber.ToString());
-            item.SubItems.Add(household.Address ?? "No Address");
-
-            // Alternate row colors for better readability
-            item.BackColor = peopleListView.Items.Count % 2 == 0
-                ? Color.White
-                : Color.FromArgb(245, 245, 245);
-
-            peopleListView.Items.Add(item);
-        }
 
         /// <summary>
         /// Handler for selection change to show detail panel

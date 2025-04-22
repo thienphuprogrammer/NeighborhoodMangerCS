@@ -80,7 +80,7 @@ namespace KhuPhoManager.Views.Forms
             peopleButton.Click += (sender, e) => {
                 SetActiveButton(peopleButton);
                 ShowPanel(peoplePanel);
-                peoplePanel.LoadPeopleList();
+                peoplePanel.ApplyPeopleFilterAndSort();
             };
 
             reportsButton.Click += (sender, e) => {
