@@ -1,7 +1,3 @@
-using System;
-using System.Drawing;
-using System.Windows.Forms;
-using System.Linq;
 using KhuPhoManager.Controllers;
 using KhuPhoManager.Models;
 using KhuPhoManager.Views.Helpers;
@@ -1018,7 +1014,7 @@ namespace KhuPhoManager.Views.UserControls
                 // Get selected person info
                 var selectedItem = e.Item;
                 string personName = selectedItem.Text;
-                int houseNumber = int.Parse(selectedItem.SubItems[3].Text);
+                int houseNumber = int.Parse(selectedItem.SubItems[4].Text);
                 var household = _controller.GetHouseholds().FirstOrDefault(h => h.HouseNumber == houseNumber);
                 if (household == null) return;
                 var person = household.Members.FirstOrDefault(p => p.FullName == personName);
