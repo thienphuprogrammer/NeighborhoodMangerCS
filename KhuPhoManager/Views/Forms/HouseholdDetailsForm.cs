@@ -153,9 +153,11 @@ namespace KhuPhoManager.Views.Forms
             // Add columns to ListView
             membersListView.Columns.Add("Type", 100);
             membersListView.Columns.Add("Full Name", 200);
+            membersListView.Columns.Add("Date of Birth", 150);
             membersListView.Columns.Add("Age", 60);
-            membersListView.Columns.Add("Occupation/Class", 150);
-            membersListView.Columns.Add("ID/Birth Certificate", 150);
+            membersListView.Columns.Add("Occupation/School", 150);
+            membersListView.Columns.Add("Grade", 60);
+            membersListView.Columns.Add("ID", 150);
 
             // Add title for the members list
             Label membersTitle = new Label
@@ -290,17 +292,20 @@ namespace KhuPhoManager.Views.Forms
             {
                 ListViewItem item = new ListViewItem(member.PersonType);
                 item.SubItems.Add(member.FullName);
+                item.SubItems.Add(member.DateOfBirth.ToString("M/d/yyyy"));
                 item.SubItems.Add(member.Age.ToString());
                 
                 if (member is Adult adult)
                 {
                     item.SubItems.Add(adult.Occupation);
+                    item.SubItems.Add("-");
                     item.SubItems.Add(adult.IdNumber);
                 }
                 else if (member is Child child)
                 {
-                    item.SubItems.Add(child.SchoolClass);
-                    item.SubItems.Add(child.BirthCertificateNumber);
+                    item.SubItems.Add(child.School);
+                    item.SubItems.Add(child.Grade.ToString());
+                    item.SubItems.Add(child.IdNumber);
                 }
                 
                 item.Tag = member;

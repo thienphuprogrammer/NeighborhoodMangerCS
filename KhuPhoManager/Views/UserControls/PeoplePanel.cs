@@ -25,6 +25,7 @@ namespace KhuPhoManager.Views.UserControls
         private TextBox occupationTextBox;
         private TextBox schoolTextBox;
         private NumericUpDown gradeInput;
+        private DateTimePicker dateOfBirthPicker;
         private Button saveButton;
         private Button cancelButton;
         private bool isEditing = false;
@@ -179,7 +180,7 @@ namespace KhuPhoManager.Views.UserControls
                 editPanel = new Panel
                 {
                     Dock = DockStyle.Bottom,
-                    Height = 350,
+                    Height = 390,
                     BackColor = Color.FromArgb(240, 240, 240),
                     BorderStyle = BorderStyle.FixedSingle,
                     Padding = new Padding(10)
@@ -222,6 +223,23 @@ namespace KhuPhoManager.Views.UserControls
                 {
                     Dock = DockStyle.Fill,
                     Text = name,
+                    Margin = new Padding(3, 10, 3, 10)
+                };
+
+                // Date of Birth input
+                Label dobLabel = new Label
+                {
+                    Text = "Date of Birth:",
+                    Dock = DockStyle.Fill,
+                    TextAlign = ContentAlignment.MiddleRight,
+                    Margin = new Padding(3, 10, 3, 10)
+                };
+
+                dateOfBirthPicker = new DateTimePicker
+                {
+                    Dock = DockStyle.Fill,
+                    Format = DateTimePickerFormat.Short,
+                    Value = DateTime.Now,
                     Margin = new Padding(3, 10, 3, 10)
                 };
 
@@ -390,19 +408,21 @@ namespace KhuPhoManager.Views.UserControls
                 // Add controls to form layout
                 formLayout.Controls.Add(nameLabel, 0, 0);
                 formLayout.Controls.Add(nameTextBox, 1, 0);
-                formLayout.Controls.Add(ageLabel, 0, 1);
-                formLayout.Controls.Add(ageInput, 1, 1);
-                formLayout.Controls.Add(typeLabel, 0, 2);
-                formLayout.Controls.Add(typeComboBox, 1, 2);
-                formLayout.Controls.Add(householdLabel, 0, 3);
-                formLayout.Controls.Add(householdComboBox, 1, 3);
-                formLayout.Controls.Add(occupationLabel, 0, 4);
-                formLayout.Controls.Add(occupationTextBox, 1, 4);
-                formLayout.Controls.Add(schoolLabel, 0, 5);
-                formLayout.Controls.Add(schoolTextBox, 1, 5);
-                formLayout.Controls.Add(gradeLabel, 0, 6);
-                formLayout.Controls.Add(gradeInput, 1, 6);
-                formLayout.Controls.Add(buttonPanel, 1, 7);
+                formLayout.Controls.Add(dobLabel, 0, 1);
+                formLayout.Controls.Add(dateOfBirthPicker, 1, 1);
+                formLayout.Controls.Add(ageLabel, 0, 2);
+                formLayout.Controls.Add(ageInput, 1, 2);
+                formLayout.Controls.Add(typeLabel, 0, 3);
+                formLayout.Controls.Add(typeComboBox, 1, 3);
+                formLayout.Controls.Add(householdLabel, 0, 4);
+                formLayout.Controls.Add(householdComboBox, 1, 4);
+                formLayout.Controls.Add(occupationLabel, 0, 5);
+                formLayout.Controls.Add(occupationTextBox, 1, 5);
+                formLayout.Controls.Add(schoolLabel, 0, 6);
+                formLayout.Controls.Add(schoolTextBox, 1, 6);
+                formLayout.Controls.Add(gradeLabel, 0, 7);
+                formLayout.Controls.Add(gradeInput, 1, 7);
+                formLayout.Controls.Add(buttonPanel, 1, 8);
 
                 // Add controls to edit panel
                 editPanel.Controls.Add(formLayout);
@@ -413,6 +433,9 @@ namespace KhuPhoManager.Views.UserControls
                 // Update the existing panel
                 ((Label)editPanel.Controls[1]).Text = title;
                 nameTextBox.Text = name;
+                // Set DateOfBirth to today by default; will be updated below if editing
+                if (dateOfBirthPicker != null)
+                    dateOfBirthPicker.Value = DateTime.Now;
                 ageInput.Value = Math.Max(ageInput.Minimum, Math.Min(age, ageInput.Maximum));
                 typeComboBox.SelectedItem = personType;
                 occupationTextBox.Text = occupation;
@@ -456,12 +479,12 @@ namespace KhuPhoManager.Views.UserControls
             TableLayoutPanel formLayout = (TableLayoutPanel)editPanel.Controls[0];
             
             // Get the labels and inputs by their position in the TableLayoutPanel
-            Control occupationLabel = formLayout.GetControlFromPosition(0, 4);
-            Control occupationInput = formLayout.GetControlFromPosition(1, 4);
-            Control schoolLabel = formLayout.GetControlFromPosition(0, 5);
-            Control schoolInput = formLayout.GetControlFromPosition(1, 5);
-            Control gradeLabel = formLayout.GetControlFromPosition(0, 6);
-            Control gradeInput = formLayout.GetControlFromPosition(1, 6);
+            Control occupationLabel = formLayout.GetControlFromPosition(0, 5);
+            Control occupationInput = formLayout.GetControlFromPosition(1, 5);
+            Control schoolLabel = formLayout.GetControlFromPosition(0, 6);
+            Control schoolInput = formLayout.GetControlFromPosition(1, 6);
+            Control gradeLabel = formLayout.GetControlFromPosition(0, 7);
+            Control gradeInput = formLayout.GetControlFromPosition(1, 7);
 
             // Update visibility
             occupationLabel.Visible = isAdult;
@@ -483,6 +506,7 @@ namespace KhuPhoManager.Views.UserControls
                 string name = nameTextBox.Text.Trim();
                 int age = (int)ageInput.Value;
                 string personType = typeComboBox.SelectedItem.ToString();
+                DateTime dateOfBirth = dateOfBirthPicker.Value;
 
                 if (string.IsNullOrWhiteSpace(name))
                 {
@@ -508,7 +532,12 @@ namespace KhuPhoManager.Views.UserControls
                         string occupation = occupationTextBox.Text.Trim();
                         // Generate a random ID for new person
                         string idNumber = Guid.NewGuid().ToString().Substring(0, 8);
-                        newPerson = new Adult(name, age, occupation, idNumber);
+                        newPerson = new Adult(
+                            fullName: name, 
+                            age: age, 
+                            occupation: occupation, 
+                            idNumber: idNumber, 
+                            dateOfBirth: dateOfBirth);
                     }
                     else // Child
                     {
@@ -516,7 +545,13 @@ namespace KhuPhoManager.Views.UserControls
                         int grade = (int)gradeInput.Value;
                         // Generate a random ID for new person
                         string idNumber = Guid.NewGuid().ToString().Substring(0, 8);
-                        newPerson = new Child(name, age, school, grade, idNumber);
+                        newPerson = new Child(
+                            fullName: name, 
+                            age: age, 
+                            school: school, 
+                            grade: grade, 
+                            idNumber: idNumber, 
+                            dateOfBirth: dateOfBirth);
                     }
 
                     // Add person to household
@@ -556,7 +591,12 @@ namespace KhuPhoManager.Views.UserControls
                     {
                         string occupation = occupationTextBox.Text.Trim();
                         // Use the existing person's ID number
-                        updatedPerson = new Adult(name, age, occupation, existingPerson.IdNumber);
+                        updatedPerson = new Adult(
+                            fullName: name, 
+                            age: age, 
+                            occupation: occupation, 
+                            idNumber: existingPerson.IdNumber, 
+                            dateOfBirth: dateOfBirth);
                         // Preserve the original Id property
                         updatedPerson.Id = existingPerson.Id;
                     }
@@ -565,7 +605,13 @@ namespace KhuPhoManager.Views.UserControls
                         string school = schoolTextBox.Text.Trim();
                         int grade = (int)gradeInput.Value;
                         // Use the existing person's ID number
-                        updatedPerson = new Child(name, age, school, grade, existingPerson.IdNumber);
+                        updatedPerson = new Child(
+                            fullName: name, 
+                            age: age, 
+                            school: school, 
+                            grade: grade, 
+                            idNumber: existingPerson.IdNumber, 
+                            dateOfBirth: dateOfBirth);
                         // Preserve the original Id property
                         updatedPerson.Id = existingPerson.Id;
                     }
@@ -919,7 +965,7 @@ namespace KhuPhoManager.Views.UserControls
                 personDetailPanel = new Panel
                 {
                     Dock = DockStyle.Bottom,
-                    Height = 210,
+                    Height = 230,
                     BackColor = Color.FromArgb(250, 250, 250),
                     BorderStyle = BorderStyle.FixedSingle,
                     Padding = new Padding(10)
@@ -955,29 +1001,31 @@ namespace KhuPhoManager.Views.UserControls
             // Add details
             detailLayout.Controls.Add(new Label { Text = "Name:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 0);
             detailLayout.Controls.Add(new Label { Text = person.FullName, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 0);
-            detailLayout.Controls.Add(new Label { Text = "Age:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 1);
-            detailLayout.Controls.Add(new Label { Text = person.Age.ToString(), Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 1);
-            detailLayout.Controls.Add(new Label { Text = "Type:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 2);
-            detailLayout.Controls.Add(new Label { Text = person.PersonType, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 2);
-            detailLayout.Controls.Add(new Label { Text = "Household #:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 3);
-            detailLayout.Controls.Add(new Label { Text = houseNumber.ToString(), Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 3);
+            detailLayout.Controls.Add(new Label { Text = "Date of Birth:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 1);
+            detailLayout.Controls.Add(new Label { Text = person.DateOfBirth.ToString("M/d/yyyy"), Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 1);
+            detailLayout.Controls.Add(new Label { Text = "Age:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 2);
+            detailLayout.Controls.Add(new Label { Text = person.Age.ToString(), Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 2);
+            detailLayout.Controls.Add(new Label { Text = "Type:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 3);
+            detailLayout.Controls.Add(new Label { Text = person.PersonType, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 3);
+            detailLayout.Controls.Add(new Label { Text = "Household #:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 4);
+            detailLayout.Controls.Add(new Label { Text = houseNumber.ToString(), Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 4);
 
             var household = _controller.GetHouseholds().FirstOrDefault(h => h.HouseNumber == houseNumber);
             string address = household?.Address ?? "";
-            detailLayout.Controls.Add(new Label { Text = "Address:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 4);
-            detailLayout.Controls.Add(new Label { Text = address, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 4);
+            detailLayout.Controls.Add(new Label { Text = "Address:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 5);
+            detailLayout.Controls.Add(new Label { Text = address, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 5);
 
             if (person.PersonType == "Adult" && person is Adult adult)
             {
-                detailLayout.Controls.Add(new Label { Text = "Occupation:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 5);
-                detailLayout.Controls.Add(new Label { Text = adult.Occupation, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 5);
+                detailLayout.Controls.Add(new Label { Text = "Occupation:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 6);
+                detailLayout.Controls.Add(new Label { Text = adult.Occupation, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 6);
             }
             else if (person.PersonType == "Child" && person is Child child)
             {
-                detailLayout.Controls.Add(new Label { Text = "School:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 5);
-                detailLayout.Controls.Add(new Label { Text = child.School, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 5);
-                detailLayout.Controls.Add(new Label { Text = "Grade:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 6);
-                detailLayout.Controls.Add(new Label { Text = child.Grade.ToString(), Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 6);
+                detailLayout.Controls.Add(new Label { Text = "School:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 6);
+                detailLayout.Controls.Add(new Label { Text = child.School, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 6);
+                detailLayout.Controls.Add(new Label { Text = "Grade:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 7);
+                detailLayout.Controls.Add(new Label { Text = child.Grade.ToString(), Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 7);
             }
 
             personDetailPanel.Controls.Add(detailLayout);

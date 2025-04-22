@@ -58,79 +58,7 @@ namespace KhuPhoManager.Views.UserControls
                 Margin = new Padding(0, 0, 0, 15)
             };
 
-            // Recent Activity panel with modern card-based design
-            Panel recentActivityPanel = new Panel
-            {
-                Dock = DockStyle.Top,
-                Height = 220,
-                Padding = new Padding(0, 0, 0, 10),
-                Margin = new Padding(0, 0, 0, 15)
-            };
-
-            // Recent Activity title
-            Label recentActivityTitle = new Label
-            {
-                Text = "Recent Activity",
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = UIHelper.PrimaryColor,
-                Dock = DockStyle.Top,
-                Height = 30
-            };
-
-            // Create a flow layout panel for activity cards
-            FlowLayoutPanel activityCardsPanel = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = true,
-                AutoScroll = true,
-                Padding = new Padding(5)
-            };
-
-            // Create activity cards
-            Panel[] activityCards = new Panel[4];
             
-            // Activity 1: Household Added
-            activityCards[0] = CreateActivityCard(
-                DateTime.Now,
-                "Household Added",
-                "New household #101 at 123 Main St",
-                "🏠",
-                UIHelper.PrimaryColor);
-
-            // Activity 2: Person Added
-            activityCards[1] = CreateActivityCard(
-                DateTime.Now.AddHours(-2),
-                "Person Added",
-                "John Doe added to household #102",
-                "👤",
-                Color.FromArgb(75, 192, 192));
-
-            // Activity 3: Person Edited
-            activityCards[2] = CreateActivityCard(
-                DateTime.Now.AddHours(-5),
-                "Person Edited",
-                "Updated information for Jane Smith in household #103",
-                "✏️",
-                Color.FromArgb(255, 159, 64));
-
-            // Activity 4: Household Removed
-            activityCards[3] = CreateActivityCard(
-                DateTime.Now.AddDays(-1),
-                "Household Removed",
-                "Removed household #104 from the system",
-                "🗑️",
-                Color.FromArgb(255, 99, 132));
-
-            // Add activity cards to the flow panel
-            foreach (var card in activityCards)
-            {
-                activityCardsPanel.Controls.Add(card);
-            }
-
-            // Add controls to recent activity panel
-            recentActivityPanel.Controls.Add(activityCardsPanel);
-            recentActivityPanel.Controls.Add(recentActivityTitle);
 
             // Quick Stats panel
             Panel quickStatsPanel = new Panel
@@ -240,22 +168,7 @@ namespace KhuPhoManager.Views.UserControls
                 Margin = new Padding(0, 10, 10, 0)
             };
             viewDetailsButton.FlatAppearance.BorderSize = 0;
-
-            // Manage households button
-            Button manageHouseholdsButton = new Button
-            {
-                Text = "Manage Households",
-                BackColor = UIHelper.PrimaryColor,
-                ForeColor = UIHelper.TextColor,
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(140, 30),
-                Location = new Point(140, 10),
-                Font = new Font("Segoe UI", 9),
-                Cursor = Cursors.Hand,
-                Margin = new Padding(10, 10, 0, 0)
-            };
-            manageHouseholdsButton.FlatAppearance.BorderSize = 0;
-
+            
             // Action buttons panel
             Panel actionButtonsPanel = new Panel
             {
@@ -266,7 +179,6 @@ namespace KhuPhoManager.Views.UserControls
 
             // Add buttons to action panel
             actionButtonsPanel.Controls.Add(viewDetailsButton);
-            actionButtonsPanel.Controls.Add(manageHouseholdsButton);
 
             // Add controls to recent households panel
             recentHouseholdsPanel.Controls.Add(householdListView);
@@ -276,7 +188,6 @@ namespace KhuPhoManager.Views.UserControls
             // Add controls to dashboard panel
             this.Controls.Add(recentHouseholdsPanel);
             this.Controls.Add(quickStatsPanel);
-            this.Controls.Add(recentActivityPanel);
             this.Controls.Add(statisticsPanel);
             this.Controls.Add(dashboardTitle);
 
@@ -335,7 +246,7 @@ namespace KhuPhoManager.Views.UserControls
         {
             RefreshStatistics();
             LoadHouseholdList();
-            RefreshRecentActivity();
+            // Recent Activity section removed for cleaner dashboard
         }
 
         /// <summary>

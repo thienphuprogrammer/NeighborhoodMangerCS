@@ -12,7 +12,8 @@ namespace KhuPhoManager.Models
         private int _age;
         private string _occupation;
         private string _idNumber;
-        
+        private DateTime _dateOfBirth;
+
         /// <summary>
         /// Gets or sets the adult's full name
         /// </summary>
@@ -90,6 +91,23 @@ namespace KhuPhoManager.Models
         public string PersonType => "Adult";
 
         /// <summary>
+        /// Gets or sets the person's date of birth
+        /// </summary>
+        public DateTime DateOfBirth 
+        {
+            // Validate the date of birth
+            get => _dateOfBirth;
+            set 
+            { 
+                if (value < DateTime.Now.AddYears(-120))
+                    throw new ArgumentException("Date of birth is unreasonably old", nameof(value));
+                if (value > DateTime.Now.AddYears(-18))
+                    throw new ArgumentException("Date of birth is unreasonably recent", nameof(value));
+                _dateOfBirth = value; 
+            } 
+        }
+       
+        /// <summary>
         /// Creates a new instance of the Adult class
         /// </summary>
         public Adult()
@@ -124,7 +142,22 @@ namespace KhuPhoManager.Models
             Occupation = occupation;
             IdNumber = Guid.NewGuid().ToString().Substring(0, 12); // Generate a placeholder ID
         }
-        
+
+        /// <summary>
+        /// Creates a new instance of the Adult class with the specified properties (with ID number)
+        /// </summary>
+        /// <exception cref="ArgumentException">Thrown when any parameter is invalid</exception>
+        public Adult(string fullName, int age, string occupation, string idNumber, DateTime dateOfBirth)
+        {
+            // These property setters will validate the input
+            Id = Guid.NewGuid().ToString();
+            FullName = fullName;
+            Age = age;
+            Occupation = occupation;
+            IdNumber = idNumber;
+            DateOfBirth = dateOfBirth;
+        }
+
         /// <summary>
         /// Returns a string representation of the adult
         /// </summary>

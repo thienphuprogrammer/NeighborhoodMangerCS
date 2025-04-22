@@ -11,9 +11,11 @@ namespace KhuPhoManager.Models
         private string _fullName;
         private int _age;
         private string _schoolClass;
-        private string _birthCertificateNumber;
         private string _school;
         private int _grade;
+        private string _idNumber;
+        private string _birthCertificateNumber;
+        private DateTime _dateOfBirth;
         
         /// <summary>
         /// Gets or sets the child's full name
@@ -61,20 +63,11 @@ namespace KhuPhoManager.Models
                 _schoolClass = value; 
             } 
         }
-        
-        /// <summary>
-        /// Gets or sets the child's birth certificate number
-        /// </summary>
-        /// <exception cref="ArgumentException">Thrown when value is null or empty</exception>
-        public string BirthCertificateNumber 
-        { 
-            get => _birthCertificateNumber; 
-            set 
-            { 
-                if (string.IsNullOrWhiteSpace(value))
-                    throw new ArgumentException("Birth certificate number cannot be empty", nameof(value));
-                _birthCertificateNumber = value; 
-            } 
+
+        public string BirthCertificateNumber
+        {
+            get => _birthCertificateNumber;
+            set => _birthCertificateNumber = value ?? string.Empty;
         }
         
         /// <summary>
@@ -87,8 +80,13 @@ namespace KhuPhoManager.Models
         /// </summary>
         public string IdNumber 
         { 
-            get => BirthCertificateNumber; 
-            set => BirthCertificateNumber = value; 
+            get => _idNumber; 
+            set 
+            { 
+                if (string.IsNullOrWhiteSpace(value))
+                    throw new ArgumentException("ID number cannot be empty", nameof(value));
+                _idNumber = value; 
+            } 
         }
         
         /// <summary>
@@ -124,6 +122,20 @@ namespace KhuPhoManager.Models
         public string PersonType => "Child";
 
         /// <summary>
+        /// Gets or sets the person's date of birth
+        /// </summary>
+        public DateTime DateOfBirth 
+        { 
+            get => _dateOfBirth; 
+            set 
+            { 
+                if (value < DateTime.Now.AddYears(-120))
+                    throw new ArgumentException("Date of birth is unreasonably old", nameof(value));
+                _dateOfBirth = value; 
+            } 
+        }
+
+        /// <summary>
         /// Creates a new instance of the Child class
         /// </summary>
         public Child()
@@ -135,21 +147,22 @@ namespace KhuPhoManager.Models
         /// Creates a new instance of the Child class with the specified properties
         /// </summary>
         /// <exception cref="ArgumentException">Thrown when any parameter is invalid</exception>
-        public Child(string fullName, int age, string schoolClass, string birthCertificateNumber)
+        public Child(string fullName, int age, string schoolClass, DateTime dateOfBirth)
         {
             // These property setters will validate the input
             Id = Guid.NewGuid().ToString();
             FullName = fullName;
             Age = age;
             SchoolClass = schoolClass;
-            BirthCertificateNumber = birthCertificateNumber;
+            DateOfBirth = dateOfBirth;
         }
+
 
         /// <summary>
         /// Creates a new instance of the Child class with school and grade information
         /// </summary>
         /// <exception cref="ArgumentException">Thrown when any parameter is invalid</exception>
-        public Child(string fullName, int age, string school, int grade, string birthCertificateNumber)
+        public Child(string fullName, int age, string school, int grade, DateTime dateOfBirth)
         {
             // These property setters will validate the input
             Id = Guid.NewGuid().ToString();
@@ -158,7 +171,20 @@ namespace KhuPhoManager.Models
             School = school;
             Grade = grade;
             SchoolClass = $"Grade {grade}";
-            BirthCertificateNumber = birthCertificateNumber;
+            DateOfBirth = dateOfBirth;
+        }
+
+        public Child(string fullName, int age, string idNumber, DateTime dateOfBirth, int grade, string school)
+        {
+            // These property setters will validate the input
+            Id = Guid.NewGuid().ToString();
+            FullName = fullName;
+            Age = age;
+            IdNumber = idNumber;
+            Grade = grade;
+            School = school;
+            SchoolClass = $"Grade {grade}";
+            DateOfBirth = dateOfBirth;
         }
         
         /// <summary>
@@ -167,7 +193,7 @@ namespace KhuPhoManager.Models
         /// <returns>A string containing the child's details</returns>
         public override string ToString()
         {
-            return $"Child: {FullName}, Age: {Age}, School Class: {SchoolClass}, Birth Certificate: {BirthCertificateNumber}";
+            return $"Child: {FullName}, Age: {Age}, School Class: {SchoolClass}, Date of Birth: {DateOfBirth}";
         }
         
         /// <summary>

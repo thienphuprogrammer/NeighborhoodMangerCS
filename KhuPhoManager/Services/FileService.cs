@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using KhuPhoManager.Models;
+using System.Globalization;
 
 namespace KhuPhoManager.Services
 {
@@ -41,7 +42,8 @@ namespace KhuPhoManager.Services
                     int age = int.Parse(parts[4]);
                     string OccupationOrSchool = parts[5];
                     string idNumber = parts.Length > 6 ? parts[6] : string.Empty;
-                    int grade = parts.Length > 7 ? int.Parse(parts[7]) : 0;
+                    DateTime dateOfBirth = DateTime.ParseExact(parts[7], "M/d/yyyy h:mm:ss tt", CultureInfo.InvariantCulture);
+                    int grade = parts.Length > 8 ? int.Parse(parts[8]) : 0;
 
                     // Create or get household
                     if (!householdMap.TryGetValue(houseNumber, out Household household))
@@ -69,7 +71,8 @@ namespace KhuPhoManager.Services
                             FullName = fullName,
                             Age = age,
                             Occupation = OccupationOrSchool,
-                            IdNumber = idNumber
+                            IdNumber = idNumber,
+                            DateOfBirth = dateOfBirth
                         };
                     }
                     else
@@ -79,8 +82,9 @@ namespace KhuPhoManager.Services
                             FullName = fullName,
                             Age = age,
                             School = OccupationOrSchool,
-                            BirthCertificateNumber = idNumber,
-                            Grade = grade
+                            IdNumber = idNumber,
+                            Grade = grade,
+                            DateOfBirth = dateOfBirth
                         };
                     }
                     
@@ -113,11 +117,11 @@ namespace KhuPhoManager.Services
                             string line;
                             if (person is Adult adult)
                             {
-                                line = $"{household.HouseNumber},{household.Address},Adult,{adult.FullName},{adult.Age},{adult.Occupation},{adult.IdNumber}";
+                                line = $"{household.HouseNumber},{household.Address},Adult,{adult.FullName},{adult.Age},{adult.Occupation},{adult.IdNumber},{adult.DateOfBirth}";
                             }
                             else if (person is Child child)
                             {
-                                line = $"{household.HouseNumber},{household.Address},Child,{child.FullName},{child.Age},{child.School},{child.BirthCertificateNumber},{child.Grade}";
+                                line = $"{household.HouseNumber},{household.Address},Child,{child.FullName},{child.Age},{child.School},{child.IdNumber},{child.DateOfBirth},{child.Grade}";
                             }
                             else
                             {
