@@ -1144,6 +1144,9 @@ namespace KhuPhoManager.Views.UserControls
                 detailLayout.Controls.Add(new Label { Text = adult.Occupation, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 7);
                 detailLayout.Controls.Add(new Label { Text = "Number ID:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 8);
                 detailLayout.Controls.Add(new Label { Text = adult.IdNumber, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 8);
+                // empty row
+                detailLayout.Controls.Add(new Label { Text = "", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 9);
+                detailLayout.Controls.Add(new Label { Text = "", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 9);
             }
             else if (person.PersonType == "Child" && person is Child child)
             {
