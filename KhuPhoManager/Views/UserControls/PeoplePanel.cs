@@ -965,7 +965,7 @@ namespace KhuPhoManager.Views.UserControls
                 personDetailPanel = new Panel
                 {
                     Dock = DockStyle.Bottom,
-                    Height = 230,
+                    Height = 235,
                     BackColor = Color.FromArgb(250, 250, 250),
                     BorderStyle = BorderStyle.FixedSingle,
                     Padding = new Padding(10)
