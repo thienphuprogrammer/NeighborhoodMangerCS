@@ -31,6 +31,8 @@ namespace KhuPhoManager.Views.UserControls
         private string editingPersonId = null;
         private int editingHouseNumber = -1;
 
+        private Panel personDetailPanel;
+
         /// <summary>
         /// Constructor for the People panel
         /// </summary>
@@ -139,6 +141,9 @@ namespace KhuPhoManager.Views.UserControls
             peopleListView.Columns.Add("House #", 70);
             peopleListView.Columns.Add("Address", 250);
 
+            // Show details when a person is selected
+            peopleListView.ItemSelectionChanged += PeopleListView_ItemSelectionChanged;
+
             // Add controls to panel
             this.Controls.Add(peopleListView);
             this.Controls.Add(buttonPanel);
@@ -174,7 +179,7 @@ namespace KhuPhoManager.Views.UserControls
                 editPanel = new Panel
                 {
                     Dock = DockStyle.Bottom,
-                    Height = 320,
+                    Height = 350,
                     BackColor = Color.FromArgb(240, 240, 240),
                     BorderStyle = BorderStyle.FixedSingle,
                     Padding = new Padding(10)
@@ -753,12 +758,12 @@ namespace KhuPhoManager.Views.UserControls
             // Warning label
             Label warningLabel = new Label
             {
+                Text = $"Are you sure you want to delete {personName} from Household #{houseNumber}?",
                 Dock = DockStyle.Top,
                 Height = 50,
                 Font = new Font("Segoe UI", 10),
                 ForeColor = Color.DarkRed,
                 TextAlign = ContentAlignment.MiddleCenter,
-                Text = $"Are you sure you want to delete {personName} from Household #{houseNumber}?"
             };
 
             // Buttons panel
@@ -876,6 +881,128 @@ namespace KhuPhoManager.Views.UserControls
                 : Color.FromArgb(245, 245, 245);
 
             peopleListView.Items.Add(item);
+        }
+
+        /// <summary>
+        /// Handler for selection change to show detail panel
+        /// </summary>
+        private void PeopleListView_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
+        {
+            if (isEditing) return; // Don't show detail panel while editing
+            if (e.IsSelected)
+            {
+                // Get selected person info
+                var selectedItem = e.Item;
+                string personName = selectedItem.Text;
+                int houseNumber = int.Parse(selectedItem.SubItems[3].Text);
+                var household = _controller.GetHouseholds().FirstOrDefault(h => h.HouseNumber == houseNumber);
+                if (household == null) return;
+                var person = household.Members.FirstOrDefault(p => p.FullName == personName);
+                if (person != null)
+                {
+                    ShowPersonDetailPanel(person, houseNumber);
+                }
+            }
+            else
+            {
+                HidePersonDetailPanel();
+            }
+        }
+
+        /// <summary>
+        /// Show the inline detail panel for a person
+        /// </summary>
+        private void ShowPersonDetailPanel(IPerson person, int houseNumber)
+        {
+            if (personDetailPanel == null)
+            {
+                personDetailPanel = new Panel
+                {
+                    Dock = DockStyle.Bottom,
+                    Height = 210,
+                    BackColor = Color.FromArgb(250, 250, 250),
+                    BorderStyle = BorderStyle.FixedSingle,
+                    Padding = new Padding(10)
+                };
+            }
+            else
+            {
+                personDetailPanel.Controls.Clear();
+            }
+
+            // Title
+            Label detailTitle = new Label
+            {
+                Text = "Person Details",
+                Dock = DockStyle.Top,
+                Height = 28,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = UIHelper.PrimaryColor
+            };
+
+            // Table for details
+            TableLayoutPanel detailLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 7,
+                Padding = new Padding(5),
+                AutoSize = true
+            };
+            detailLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
+            detailLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70F));
+
+            // Add details
+            detailLayout.Controls.Add(new Label { Text = "Name:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 0);
+            detailLayout.Controls.Add(new Label { Text = person.FullName, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 0);
+            detailLayout.Controls.Add(new Label { Text = "Age:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 1);
+            detailLayout.Controls.Add(new Label { Text = person.Age.ToString(), Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 1);
+            detailLayout.Controls.Add(new Label { Text = "Type:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 2);
+            detailLayout.Controls.Add(new Label { Text = person.PersonType, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 2);
+            detailLayout.Controls.Add(new Label { Text = "Household #:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 3);
+            detailLayout.Controls.Add(new Label { Text = houseNumber.ToString(), Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 3);
+
+            var household = _controller.GetHouseholds().FirstOrDefault(h => h.HouseNumber == houseNumber);
+            string address = household?.Address ?? "";
+            detailLayout.Controls.Add(new Label { Text = "Address:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 4);
+            detailLayout.Controls.Add(new Label { Text = address, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 4);
+
+            if (person.PersonType == "Adult" && person is Adult adult)
+            {
+                detailLayout.Controls.Add(new Label { Text = "Occupation:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 5);
+                detailLayout.Controls.Add(new Label { Text = adult.Occupation, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 5);
+            }
+            else if (person.PersonType == "Child" && person is Child child)
+            {
+                detailLayout.Controls.Add(new Label { Text = "School:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 5);
+                detailLayout.Controls.Add(new Label { Text = child.School, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 5);
+                detailLayout.Controls.Add(new Label { Text = "Grade:", TextAlign = ContentAlignment.MiddleRight, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9, FontStyle.Bold) }, 0, 6);
+                detailLayout.Controls.Add(new Label { Text = child.Grade.ToString(), Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9) }, 1, 6);
+            }
+
+            personDetailPanel.Controls.Add(detailLayout);
+            personDetailPanel.Controls.Add(detailTitle);
+
+            if (!Controls.Contains(personDetailPanel))
+            {
+                Controls.Add(personDetailPanel);
+                personDetailPanel.BringToFront();
+            }
+            else
+            {
+                personDetailPanel.BringToFront();
+            }
+        }
+
+        /// <summary>
+        /// Hide the person detail panel
+        /// </summary>
+        private void HidePersonDetailPanel()
+        {
+            if (personDetailPanel != null && Controls.Contains(personDetailPanel))
+            {
+                Controls.Remove(personDetailPanel);
+            }
         }
 
         /// <summary>

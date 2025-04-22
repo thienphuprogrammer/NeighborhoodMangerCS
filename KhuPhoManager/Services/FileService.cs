@@ -39,8 +39,9 @@ namespace KhuPhoManager.Services
                     string personType = parts[2];
                     string fullName = parts[3];
                     int age = int.Parse(parts[4]);
-                    string idOrClass = parts[5];
+                    string OccupationOrSchool = parts[5];
                     string idNumber = parts.Length > 6 ? parts[6] : string.Empty;
+                    int grade = parts.Length > 7 ? int.Parse(parts[7]) : 0;
 
                     // Create or get household
                     if (!householdMap.TryGetValue(houseNumber, out Household household))
@@ -67,7 +68,7 @@ namespace KhuPhoManager.Services
                         {
                             FullName = fullName,
                             Age = age,
-                            Occupation = idOrClass,
+                            Occupation = OccupationOrSchool,
                             IdNumber = idNumber
                         };
                     }
@@ -77,8 +78,9 @@ namespace KhuPhoManager.Services
                         {
                             FullName = fullName,
                             Age = age,
-                            SchoolClass = idOrClass,
-                            BirthCertificateNumber = idNumber
+                            School = OccupationOrSchool,
+                            BirthCertificateNumber = idNumber,
+                            Grade = grade
                         };
                     }
                     
@@ -115,7 +117,7 @@ namespace KhuPhoManager.Services
                             }
                             else if (person is Child child)
                             {
-                                line = $"{household.HouseNumber},{household.Address},Child,{child.FullName},{child.Age},{child.SchoolClass},{child.BirthCertificateNumber}";
+                                line = $"{household.HouseNumber},{household.Address},Child,{child.FullName},{child.Age},{child.School},{child.BirthCertificateNumber},{child.Grade}";
                             }
                             else
                             {
